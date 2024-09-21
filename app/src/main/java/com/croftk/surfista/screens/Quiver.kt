@@ -2,6 +2,7 @@ package com.croftk.surfista.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ClickableIcon
+import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TitleBar
@@ -56,7 +58,7 @@ fun BoardCardRow(adjustablePadding: Dp){
 				"My Boards",
 				fontSize = 30.sp,
 			)
-			Text("7 Day surf forecast for Santander, ES")
+			Text("Your current quiver of surfboards")
 		}
 		Row(modifier = Modifier
 			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
@@ -120,13 +122,54 @@ fun BoardCard(){
 
 @Composable
 fun Quiver(innerPadding: PaddingValues, navController: NavController){
-	val scrollState = rememberScrollState()
+	val vertScrollState = rememberScrollState()
 	Column(
 		modifier = Modifier.fillMaxHeight().padding(innerPadding).fillMaxWidth().background(colorResource(R.color.offWhite)),
 		horizontalAlignment = Alignment.CenterHorizontally
 	){
 		BoardCardRow(12.dp)
 		SearchBar(12.dp)
+		Column(
+			modifier = Modifier
+				.padding(12.dp)
+				.verticalScroll(vertScrollState)
+				.fillMaxWidth()
+		) {
+			for (i in 1..10){
+				SearchResult()
+			}
+		}
+	}
+}
+
+@Composable
+fun SearchResult(){
+	Row(
+		modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+		horizontalArrangement = Arrangement.SpaceAround,
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		ImageIcon(
+			modifier = Modifier.height(40.dp),
+			drawableImage = R.drawable.surfboard,
+			contentDesc = R.string.search_mag_desc
+		)
+		Column(modifier = Modifier.fillMaxWidth(0.5f)) {
+			Text("Board Brand", fontSize = 30.sp)
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceBetween
+			) {
+				Text("Longboard", fontSize = 20.sp)
+				Text("9.1ft", fontSize = 20.sp)
+			}
+		}
+		ClickableIcon(
+			modifier = Modifier.height(30.dp),
+			drawableImage = R.drawable.add,
+			contentDesc = R.string.search_mag_desc,
+			click = {}
+		)
 	}
 }
 

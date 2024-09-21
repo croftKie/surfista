@@ -1,6 +1,7 @@
 package com.croftk.surfista
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,7 +39,11 @@ import com.croftk.surfista.utilities.QuiverScreen
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.SettingsScreen
 import com.croftk.surfista.utilities.SplashScreen
-import com.croftk.surfista.utilities.httpServices.WaveService
+import com.croftk.surfista.utilities.httpInterfaces.WaveApi
+import com.croftk.surfista.utilities.httpServices.WaveServices
+import com.croftk.surfista.utilities.retrofit.RetrofitInstance
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,10 +60,6 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigation(){
-
-	val response = WaveService.
-
-
 
 	val navController = rememberNavController()
 	val topBarState = rememberSaveable { (mutableStateOf(true)) }

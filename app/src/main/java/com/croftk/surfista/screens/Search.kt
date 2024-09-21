@@ -3,6 +3,7 @@ package com.croftk.surfista.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,11 +41,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
@@ -52,16 +55,22 @@ import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.utilities.DashboardScreen
+import com.croftk.surfista.utilities.httpServices.WaveServices
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Search(innerPadding: PaddingValues, navController: NavController) {
 
-	val sheetState = rememberModalBottomSheetState()
+	val sheetState = rememberModalBottomSheetState(
+		skipPartiallyExpanded = false
+	)
 	var showBottomSheet = remember { mutableStateOf(false) }
 
 	Column(
@@ -72,16 +81,7 @@ fun Search(innerPadding: PaddingValues, navController: NavController) {
 	) {
 		SearchBar(onClick = { showBottomSheet.value = true })
 		SearchTutorial()
-		if (showBottomSheet.value) {
-			ModalBottomSheet(
-				onDismissRequest = {
-					showBottomSheet.value = false
-				},
-				sheetState = sheetState
-			) {
-				MapModal(navController)
-			}
-		}
+		BootySheet(navController)
 	}
 }
 
@@ -105,16 +105,71 @@ fun SearchTutorial(){
 
 @Composable
 fun MapModal(navController: NavController){
-	Column(Modifier.fillMaxWidth().height(900.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+	val scope = rememberCoroutineScope()
+	Column(Modifier.fillMaxWidth().height(350.dp), horizontalAlignment = Alignment.CenterHorizontally) {
 		Box(modifier = Modifier
-			.height(100.dp)
-			.width(100.dp)
-			.background(colorResource(R.color.blue))
+			.padding(64.dp)
+			.fillMaxWidth()
+			.fillMaxHeight()
 			.clickable {
 				navController.navigate(DashboardScreen.route)
+				scope.launch {
+					val result = WaveServices.fetchWaveData()
+					println(result)
+				}
 			}
-		)
+		){
+			OsmdroidMapView()
+		}
 	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BootySheet(navController: NavController) {
+	val scope = rememberCoroutineScope()
+	val scaffoldState = rememberBottomSheetScaffoldState()
+
+	BottomSheetScaffold(
+		scaffoldState = scaffoldState,
+		sheetPeekHeight = 400.dp,
+		sheetSwipeEnabled = false,
+		sheetContent = {
+			Box(
+				modifier = Modifier.fillMaxSize().padding(32.dp),
+				contentAlignment = Alignment.Center
+			) {
+				MapModal(navController)
+			}
+		}
+	) {
+
+	}
+}
+
+
+@Composable
+fun OsmdroidMapView() {
+	var geoPoint by remember{ mutableStateOf(GeoPoint(0.0,0.0))}
+
+	AndroidView(
+		modifier = Modifier.fillMaxSize(),
+		factory = { context ->
+			// Creates the view
+			MapView(context).apply {
+				setZoomLevel(9.0)
+				setTileSource(TileSourceFactory.USGS_TOPO)
+				setOnClickListener {
+					TODO("Handle click here")
+				}
+			}
+		},
+		update = { view ->
+			// Code to update or recompose the view goes here
+			// Since geoPoint is read here, the view will recompose whenever it is updated
+			view.controller.setCenter(geoPoint)
+		}
+	)
 }
 
 
