@@ -7,6 +7,7 @@ plugins {
 }
 
 
+
 android {
 	namespace = "com.croftk.surfista"
 	compileSdk = 34
@@ -22,6 +23,11 @@ android {
 		vectorDrawables {
 			useSupportLibrary = true
 		}
+
+		ksp {
+			arg("room.schemaLocation", "$projectDir/schemas")
+		}
+
 		buildConfigField("String", "GEO_KEY", "\"66ee978bf18e1248071945bjq69c4d\"")
 	}
 
