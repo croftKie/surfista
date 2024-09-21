@@ -7,7 +7,7 @@ import com.croftk.surfista.utilities.retrofit.RetrofitInstance
 object WaveServices {
 
 	private fun WaveApi(): WaveApi{
-		return RetrofitInstance.getInstance().create(WaveApi::class.java)
+		return RetrofitInstance.getInstance("https://marine-api.open-meteo.com/v1/").create(WaveApi::class.java)
 	}
 
 	suspend fun fetchWaveData(): Wavedata? {

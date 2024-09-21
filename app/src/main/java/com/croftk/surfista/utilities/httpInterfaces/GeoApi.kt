@@ -3,8 +3,11 @@ package com.croftk.surfista.utilities.httpInterfaces
 import com.croftk.surfista.utilities.dataDefinitions.Geodata
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface GeoApi {
-	@GET("search?q=santander&api_key=66ee978bf18e1248071945bjq69c4d5")
-	suspend fun getGeoData(): Response<List<Geodata>>
+	@GET("search")
+	suspend fun getGeoData(
+		@Query("q") location: String,
+		@Query("api_key") key: String): Response<List<Geodata>>
 }

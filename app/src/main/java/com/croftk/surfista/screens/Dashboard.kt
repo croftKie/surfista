@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.croftk.surfista.BuildConfig
 import com.croftk.surfista.R
 import com.croftk.surfista.ui.theme.SurfistaTheme
 import com.croftk.surfista.components.ImageIcon
@@ -47,6 +49,8 @@ import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.utilities.SearchScreen
+import com.croftk.surfista.utilities.httpServices.GeoServices
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -207,6 +211,9 @@ fun Table(
 fun Dashboard(innerPadding: PaddingValues, navController: NavHostController){
 	val scrollState = rememberScrollState()
 	var isActive = remember { mutableStateOf(0) }
+	val scope = rememberCoroutineScope()
+
+
 	Column(modifier = Modifier
 		.fillMaxWidth()
 		.fillMaxHeight()
@@ -216,7 +223,19 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController){
 		verticalArrangement = Arrangement.SpaceEvenly
 	) {
 		Column(){
-			SearchBar(adjustablePadding = 10.dp, onClick = {navController.navigate(SearchScreen.route)})
+			SearchBar(
+				adjustablePadding = 10.dp,
+				onClick = { value ->
+					scope.launch {
+						val result = GeoServices.fetchGeoData(
+							location = value.value,
+							key = BuildConfig.GEO_KEY
+						)
+						println("Printing Result...")
+						println(result)
+					}
+					//navController.navigate(SearchScreen.route)
+				})
 			DayCardRow(adjustablePadding = 20.dp)
 		}
 		Column(modifier = Modifier

@@ -187,12 +187,11 @@ fun InputField(
 	width: Float = 0.8f,
 	radius: Dp = 12.dp,
 	placeholderText: String = "Search Surf Spot",
-	value: String = "",
+	value: MutableState<String> = mutableStateOf(""),
 	containerColor: Color = Color.White,
 	focusedIndicatorColor: Color = Color.White,
 	unfocusedIndicatorColor: Color = Color.White
 ){
-	var text by remember { mutableStateOf(value) }
 
 	TextField(
 		modifier = Modifier
@@ -203,18 +202,18 @@ fun InputField(
 			focusedIndicatorColor = focusedIndicatorColor,
 			unfocusedIndicatorColor = unfocusedIndicatorColor
 		),
-		value = text,
-		onValueChange = { text = it },
+		value = value.value,
+		onValueChange = { value.value = it },
 		placeholder = {
 			Text(placeholderText)
-
 		}
 	)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar(adjustablePadding: Dp = 12.dp, onClick: () -> Unit = {}) {
+fun SearchBar(adjustablePadding: Dp = 12.dp, onClick: (text: MutableState<String>) -> Unit = {}) {
+	val text = remember { mutableStateOf("") }
+
 	Row(
 		modifier = Modifier
 			.padding(adjustablePadding)
@@ -223,7 +222,7 @@ fun SearchBar(adjustablePadding: Dp = 12.dp, onClick: () -> Unit = {}) {
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	){
-		InputField()
+		InputField(value = text)
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -240,7 +239,9 @@ fun SearchBar(adjustablePadding: Dp = 12.dp, onClick: () -> Unit = {}) {
 					.width(20.dp),
 				R.drawable.mag,
 				R.string.search_mag_desc,
-				click = onClick
+				click = {
+					onClick(text)
+				}
 			)
 		}
 	}

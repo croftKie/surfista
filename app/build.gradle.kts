@@ -1,7 +1,11 @@
+
+
 plugins {
 	alias(libs.plugins.android.application)
 	alias(libs.plugins.kotlin.android)
+	id("com.google.devtools.ksp") version "1.9.0-1.0.13"
 }
+
 
 android {
 	namespace = "com.croftk.surfista"
@@ -18,6 +22,7 @@ android {
 		vectorDrawables {
 			useSupportLibrary = true
 		}
+		buildConfigField("String", "GEO_KEY", "\"66ee978bf18e1248071945bjq69c4d\"")
 	}
 
 	buildTypes {
@@ -39,6 +44,7 @@ android {
 	buildFeatures {
 		compose = true
 		viewBinding = true
+		buildConfig = true
 	}
 	composeOptions {
 		kotlinCompilerExtensionVersion = "1.5.1"
@@ -48,6 +54,7 @@ android {
 			excludes += "/META-INF/{AL2.0,LGPL2.1}"
 		}
 	}
+
 }
 
 dependencies {
@@ -62,6 +69,14 @@ dependencies {
 	implementation(libs.androidx.material3)
 	implementation("androidx.navigation:navigation-compose:2.7.6")
 	implementation(libs.androidx.navigation.runtime.ktx)
+
+	val room_version = "2.6.1"
+
+	implementation("androidx.room:room-runtime:$room_version")
+	annotationProcessor("androidx.room:room-compiler:$room_version")
+	ksp("androidx.room:room-compiler:$room_version")
+	// optional - Kotlin Extensions and Coroutines support for Room
+	implementation("androidx.room:room-ktx:$room_version")
 
 	// Retrofit
 	implementation ("com.squareup.retrofit2:retrofit:2.9.0")

@@ -79,7 +79,10 @@ fun Search(innerPadding: PaddingValues, navController: NavController) {
 			.padding(innerPadding)
 			.background(colorResource(R.color.offWhite))
 	) {
-		SearchBar(onClick = { showBottomSheet.value = true })
+		SearchBar(onClick = { value ->
+			println(value.value)
+			// showBottomSheet.value = true
+		})
 		SearchTutorial()
 		BootySheet(navController)
 	}

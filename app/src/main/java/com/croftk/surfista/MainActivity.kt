@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.croftk.surfista.components.ClickableIcon
 import com.croftk.surfista.screens.Dashboard
 import com.croftk.surfista.screens.Login
@@ -35,20 +37,36 @@ import com.croftk.surfista.ui.theme.SurfistaTheme
 import com.croftk.surfista.utilities.DashboardScreen
 import com.croftk.surfista.utilities.LoginScreen
 import com.croftk.surfista.components.NavigationBar
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.User
 import com.croftk.surfista.utilities.QuiverScreen
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.SettingsScreen
 import com.croftk.surfista.utilities.SplashScreen
-import com.croftk.surfista.utilities.httpInterfaces.WaveApi
-import com.croftk.surfista.utilities.httpServices.WaveServices
-import com.croftk.surfista.utilities.retrofit.RetrofitInstance
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
+
+		runBlocking {
+			launch {
+				val db = Room.databaseBuilder(
+					applicationContext,
+					AppDatabase::class.java, "database-name"
+				).allowMainThreadQueries().build()
+				val userDao = db.userDao()
+
+//				userDao.insertAll(User(0, "Kieran", "Croft"))
+
+				val users: List<User> = userDao.getAll()
+				println("Printing DB...")
+				println(users[0].lastName)
+			}
+		}
+
 		setContent {
 			SurfistaTheme {
 				Navigation()
