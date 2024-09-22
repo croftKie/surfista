@@ -28,7 +28,7 @@ android {
 			arg("room.schemaLocation", "$projectDir/schemas")
 		}
 
-		buildConfigField("String", "GEO_KEY", "\"66ee978bf18e1248071945bjq69c4d\"")
+		buildConfigField("String", "GEO_KEY", "\"66ee978bf18e1248071945bjq69c4d5\"")
 	}
 
 	buildTypes {

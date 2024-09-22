@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -45,34 +47,36 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.utilities.DashboardScreen
 import com.croftk.surfista.utilities.httpServices.WaveServices
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Search(innerPadding: PaddingValues, navController: NavController) {
+fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDatabase) {
 
-	val sheetState = rememberModalBottomSheetState(
-		skipPartiallyExpanded = false
-	)
-	var showBottomSheet = remember { mutableStateOf(false) }
-
+	val geoData = db.GeolocationDao().getAllSorted()
+	val selectedLocation = remember { mutableIntStateOf(-1) }
+	val openDialog = remember { mutableStateOf(true) }
 	Column(
 		modifier = Modifier
 			.fillMaxHeight()
@@ -81,87 +85,87 @@ fun Search(innerPadding: PaddingValues, navController: NavController) {
 	) {
 		SearchBar(onClick = { value ->
 			println(value.value)
-			// showBottomSheet.value = true
 		})
-		SearchTutorial()
-		BootySheet(navController)
+		SearchResults(geoData, selectedLocation, openDialog)
 	}
 }
 
 @Composable
-fun SearchTutorial(){
+fun SearchResults(
+	geoData: List<GeoLocation>,
+	selectedLocation: MutableIntState,
+	openDialog: MutableState<Boolean>
+){
+	val scrollState = rememberScrollState()
 	Column(
-		modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-		verticalArrangement = Arrangement.spacedBy(32.dp),
+		Modifier
+			.fillMaxWidth()
+			.padding(vertical = 12.dp)
+			.verticalScroll(scrollState),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.spacedBy(24.dp)
+	) {
+		geoData.forEachIndexed {index, item ->
+			SearchResult(item, index, selectedLocation, openDialog)
+		}
+	}
+}
+
+@Composable
+fun SearchResult(
+	item: GeoLocation,
+	index: Int,
+	selectedLocation: MutableIntState,
+	openDialog: MutableState<Boolean>
+){
+	Column(
+		modifier = Modifier
+			.background(colorResource(R.color.white))
+			.width(350.dp)
+			.padding(12.dp)
+			.clickable {
+				println("lat: ${item.lat} - lon: ${item.lon}")
+				selectedLocation.intValue = index
+				openDialog.value = true
+			}
+	) {
+		Row(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+			Box(modifier = Modifier.fillMaxWidth(0.3f)){
+				MapModal(item.lat.toDouble(), item.lon.toDouble())
+			}
+			Column(modifier = Modifier.fillMaxWidth()) {
+				Text(text = item.name, modifier = Modifier.fillMaxWidth())
+				Text(text = item.importance.toString())
+			}
+		}
+	}
+}
+
+@Composable
+fun MapModal(lat: Double, lon: Double){
+	Column(Modifier
+		.width(50.dp)
+		.height(50.dp),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		Image(
-			modifier = Modifier.clip(RoundedCornerShape(12.dp)).height(80.dp).background(colorResource(R.color.blue)).padding(12.dp),
-			painter = painterResource(R.drawable.mag),
-			contentDescription = ""
-		)
-		Text("1. Search a location above")
-		Text("2. Drop a pin in the map")
-		Text("3. Head to the dashboard")
-	}
-}
-
-@Composable
-fun MapModal(navController: NavController){
-	val scope = rememberCoroutineScope()
-	Column(Modifier.fillMaxWidth().height(350.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-		Box(modifier = Modifier
-			.padding(64.dp)
-			.fillMaxWidth()
-			.fillMaxHeight()
-			.clickable {
-				navController.navigate(DashboardScreen.route)
-				scope.launch {
-					val result = WaveServices.fetchWaveData()
-					println(result)
-				}
-			}
-		){
-			OsmdroidMapView()
+		Box{
+			OsmdroidMapView(lat, lon)
 		}
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BootySheet(navController: NavController) {
-	val scope = rememberCoroutineScope()
-	val scaffoldState = rememberBottomSheetScaffoldState()
-
-	BottomSheetScaffold(
-		scaffoldState = scaffoldState,
-		sheetPeekHeight = 400.dp,
-		sheetSwipeEnabled = false,
-		sheetContent = {
-			Box(
-				modifier = Modifier.fillMaxSize().padding(32.dp),
-				contentAlignment = Alignment.Center
-			) {
-				MapModal(navController)
-			}
-		}
-	) {
-
-	}
-}
-
-
-@Composable
-fun OsmdroidMapView() {
-	var geoPoint by remember{ mutableStateOf(GeoPoint(0.0,0.0))}
-
+fun OsmdroidMapView(lat: Double, lon: Double) {
+	var geoPoint by remember{ mutableStateOf(GeoPoint(lat,lon))}
 	AndroidView(
 		modifier = Modifier.fillMaxSize(),
 		factory = { context ->
 			// Creates the view
 			MapView(context).apply {
-				setZoomLevel(9.0)
-				setTileSource(TileSourceFactory.USGS_TOPO)
+				setMultiTouchControls(false)
+				Modifier.height(50.dp).width(50.dp)
+				setZoomLevel(14.0)
+				setTileSource(TileSourceFactory.OpenTopo)
 				setOnClickListener {
 					TODO("Handle click here")
 				}
@@ -173,19 +177,4 @@ fun OsmdroidMapView() {
 			view.controller.setCenter(geoPoint)
 		}
 	)
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSearch(){
-	Scaffold(
-		bottomBar = {
-//			BottomAppBar {
-//				NavigationBar()
-//			}
-		}
-	) { innerPadding ->
-		Search(innerPadding, navController = rememberNavController())
-	}
 }

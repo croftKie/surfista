@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +49,9 @@ import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TabButton
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.GeoLocation
+import com.croftk.surfista.utilities.Helpers
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.httpServices.GeoServices
 import kotlinx.coroutines.launch
@@ -206,9 +210,8 @@ fun Table(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Dashboard(innerPadding: PaddingValues, navController: NavHostController){
+fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
 	val scrollState = rememberScrollState()
 	var isActive = remember { mutableStateOf(0) }
 	val scope = rememberCoroutineScope()
@@ -231,10 +234,18 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController){
 							location = value.value,
 							key = BuildConfig.GEO_KEY
 						)
-						println("Printing Result...")
-						println(result)
+						db.GeolocationDao().deleteAll()
+						result?.forEach { item ->
+							db.GeolocationDao().insertLocation(GeoLocation(
+								placeId = item.place_id,
+								name = Helpers.cleanGeoAddress(item.display_name),
+								lat = item.lat,
+								lon = item.lon,
+								importance = item.importance.toFloat()
+							))
+						}
+						navController.navigate(SearchScreen.route)
 					}
-					//navController.navigate(SearchScreen.route)
 				})
 			DayCardRow(adjustablePadding = 20.dp)
 		}
@@ -302,16 +313,16 @@ fun PreviewDayCard(){
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewDashboard(){
-	Scaffold(
-		bottomBar = {
-			BottomAppBar(containerColor = colorResource(R.color.offWhite)) {
-				NavigationBar()
-			}
-		}
-	) { innerPadding ->
-		Dashboard(innerPadding, navController = rememberNavController())
-	}
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewDashboard(){
+//	Scaffold(
+//		bottomBar = {
+//			BottomAppBar(containerColor = colorResource(R.color.offWhite)) {
+//				NavigationBar()
+//			}
+//		}
+//	) { innerPadding ->
+//		Dashboard(innerPadding, navController = rememberNavController())
+//	}
+//}

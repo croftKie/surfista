@@ -51,25 +51,14 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 
-		runBlocking {
-			launch {
-				val db = Room.databaseBuilder(
-					applicationContext,
-					AppDatabase::class.java, "database-name"
-				).allowMainThreadQueries().build()
-				val userDao = db.userDao()
-
-//				userDao.insertAll(User(0, "Kieran", "Croft"))
-
-				val users: List<User> = userDao.getAll()
-				println("Printing DB...")
-				println(users[0].lastName)
-			}
-		}
+		val db = Room.databaseBuilder(
+			applicationContext,
+			AppDatabase::class.java, "surfista-db"
+		).allowMainThreadQueries().build()
 
 		setContent {
 			SurfistaTheme {
-				Navigation()
+				Navigation(db)
 			}
 		}
 	}
@@ -77,7 +66,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Navigation(){
+fun Navigation(db: AppDatabase){
 
 	val navController = rememberNavController()
 	val topBarState = rememberSaveable { (mutableStateOf(true)) }
@@ -156,7 +145,7 @@ fun Navigation(){
 			startDestination = SplashScreen.route
 		){
 			composable(DashboardScreen.route) {
-				Dashboard(innerPadding, navController)
+				Dashboard(innerPadding, navController, db)
 			}
 			composable(SettingsScreen.route) {
 				Settings(innerPadding, navController)
@@ -168,7 +157,7 @@ fun Navigation(){
 				Login(innerPadding, navController)
 			}
 			composable(SearchScreen.route) {
-				Search(innerPadding, navController)
+				Search(innerPadding, navController, db)
 			}
 			composable(SplashScreen.route) {
 				Splash(innerPadding, navController)
