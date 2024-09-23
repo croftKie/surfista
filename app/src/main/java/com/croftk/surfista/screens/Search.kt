@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -60,6 +61,7 @@ import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
+import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.utilities.DashboardScreen
 import com.croftk.surfista.utilities.httpServices.WaveServices
 import kotlinx.coroutines.Delay
@@ -86,7 +88,7 @@ fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDat
 		SearchBar(onClick = { value ->
 			println(value.value)
 		})
-		SearchResults(geoData, selectedLocation, openDialog)
+		SearchResults(geoData, selectedLocation, openDialog, db)
 	}
 }
 
@@ -94,7 +96,8 @@ fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDat
 fun SearchResults(
 	geoData: List<GeoLocation>,
 	selectedLocation: MutableIntState,
-	openDialog: MutableState<Boolean>
+	openDialog: MutableState<Boolean>,
+	db: AppDatabase
 ){
 	val scrollState = rememberScrollState()
 	Column(
@@ -106,7 +109,7 @@ fun SearchResults(
 		verticalArrangement = Arrangement.spacedBy(24.dp)
 	) {
 		geoData.forEachIndexed {index, item ->
-			SearchResult(item, index, selectedLocation, openDialog)
+			SearchResult(item, index, selectedLocation, openDialog, db)
 		}
 	}
 }
@@ -116,21 +119,56 @@ fun SearchResult(
 	item: GeoLocation,
 	index: Int,
 	selectedLocation: MutableIntState,
-	openDialog: MutableState<Boolean>
+	openDialog: MutableState<Boolean>,
+	db: AppDatabase
 ){
-	Column(
+	val scope = rememberCoroutineScope()
+	Row(
 		modifier = Modifier
+			.clip(RoundedCornerShape(12.dp))
 			.background(colorResource(R.color.white))
 			.width(350.dp)
 			.padding(12.dp)
 			.clickable {
-				println("lat: ${item.lat} - lon: ${item.lon}")
-				selectedLocation.intValue = index
-				openDialog.value = true
+				scope.launch {
+					val result = WaveServices.fetchWaveData(item.lat, item.lon)
+					if(result != null){
+						val timeChunked = result.hourly.time.chunked(24)
+						val whChunked = result.hourly.wave_height.chunked(24)
+						val wpChunked = result.hourly.wave_period.chunked(24)
+						val wdChunked = result.hourly.wave_direction.chunked(24)
+
+						for (i in 1..timeChunked.size){
+							db.MarineDao().insertMarineData(Marine(
+								id = timeChunked[i - 1][0].substring(0, 10),
+								name = item.name,
+								lat = item.lat.toDouble(),
+								lon = item.lon.toDouble(),
+								time = timeChunked[i - 1].toString()
+									.replace("[", "")
+									.replace("]", ""),
+								wave_height = whChunked[i - 1].toString()
+									.replace("[", "")
+									.replace("]", ""),
+								wave_period = wpChunked[i - 1].toString()
+									.replace("[", "")
+									.replace("]", ""),
+								wave_direction = wdChunked[i - 1].toString()
+									.replace("[", "")
+									.replace("]", "")
+							))
+						}
+					}
+				}
 			}
 	) {
-		Row(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
-			Box(modifier = Modifier.fillMaxWidth(0.3f)){
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.fillMaxHeight(),
+			horizontalArrangement = Arrangement.spacedBy(12.dp)
+		) {
+			Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Center){
 				MapModal(item.lat.toDouble(), item.lon.toDouble())
 			}
 			Column(modifier = Modifier.fillMaxWidth()) {
@@ -144,13 +182,12 @@ fun SearchResult(
 @Composable
 fun MapModal(lat: Double, lon: Double){
 	Column(Modifier
-		.width(50.dp)
-		.height(50.dp),
-		horizontalAlignment = Alignment.CenterHorizontally
+		.width(75.dp)
+		.height(75.dp)
+		.clip(RoundedCornerShape(6.dp))
+		.clipToBounds()
 	) {
-		Box{
-			OsmdroidMapView(lat, lon)
-		}
+		OsmdroidMapView(lat, lon)
 	}
 }
 
@@ -158,22 +195,15 @@ fun MapModal(lat: Double, lon: Double){
 fun OsmdroidMapView(lat: Double, lon: Double) {
 	var geoPoint by remember{ mutableStateOf(GeoPoint(lat,lon))}
 	AndroidView(
-		modifier = Modifier.fillMaxSize(),
 		factory = { context ->
 			// Creates the view
 			MapView(context).apply {
 				setMultiTouchControls(false)
-				Modifier.height(50.dp).width(50.dp)
-				setZoomLevel(14.0)
+				setZoomLevel(13.0)
 				setTileSource(TileSourceFactory.OpenTopo)
-				setOnClickListener {
-					TODO("Handle click here")
-				}
 			}
 		},
 		update = { view ->
-			// Code to update or recompose the view goes here
-			// Since geoPoint is read here, the view will recompose whenever it is updated
 			view.controller.setCenter(geoPoint)
 		}
 	)

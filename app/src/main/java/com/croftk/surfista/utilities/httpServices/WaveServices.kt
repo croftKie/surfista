@@ -10,8 +10,8 @@ object WaveServices {
 		return RetrofitInstance.getInstance("https://marine-api.open-meteo.com/v1/").create(WaveApi::class.java)
 	}
 
-	suspend fun fetchWaveData(): Wavedata? {
-		val result = WaveApi().getWaveData()
+	suspend fun fetchWaveData(latitude: String, longitude: String): Wavedata? {
+		val result = WaveApi().getWaveData(latitude, longitude)
 		return result.body()
 	}
 }

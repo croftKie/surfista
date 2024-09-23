@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
 		val db = Room.databaseBuilder(
 			applicationContext,
 			AppDatabase::class.java, "surfista-db"
-		).allowMainThreadQueries().build()
+		).allowMainThreadQueries().fallbackToDestructiveMigration().build()
 
 		setContent {
 			SurfistaTheme {

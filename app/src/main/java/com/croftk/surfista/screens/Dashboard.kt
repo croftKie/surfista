@@ -1,7 +1,10 @@
 package com.croftk.surfista.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +28,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,21 +56,29 @@ import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
+import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.utilities.Helpers
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.httpServices.GeoServices
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 
 @Composable
-fun DayCard(){
+fun DayCard(item: Marine, position: Int, selectedDay: MutableIntState){
+	val isActive = position == selectedDay.intValue
+	println(selectedDay)
+	println(isActive)
 	Card(modifier = Modifier
 		.width(200.dp)
 		.padding(end = 6.dp)
+		.clickable {
+			selectedDay.intValue = position
+		}
 	) {
 		Column(
 			modifier = Modifier
-				.background(Color.White)
+				.background(if(isActive) colorResource(R.color.sand) else Color.White)
 				.padding(12.dp),
 			verticalArrangement = Arrangement.spacedBy(12.dp)
 		) {
@@ -74,7 +87,7 @@ fun DayCard(){
 				horizontalArrangement = Arrangement.SpaceBetween,
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text("Monday", fontSize = 20.sp);
+				Text(item.id, fontSize = 20.sp);
 				Box(modifier = Modifier
 					.clip(shape = CircleShape)
 					.height(15.dp)
@@ -112,13 +125,13 @@ fun DayCard(){
 				.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text( text = "Daily High: 1.6m")
+				Text( text = "Daily High: ${item.wave_height.split(",").maxOrNull()}m")
 			}
 			Row(modifier = Modifier
 				.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text( text = "Daily Low: 0.8m")
+				Text( text = "Daily Low: ${item.wave_height.split(",").minOrNull()}m")
 			}
 		}
 	}
@@ -126,7 +139,7 @@ fun DayCard(){
 
 
 @Composable
-fun DayCardRow(adjustablePadding: Dp){
+fun DayCardRow(adjustablePadding: Dp, data: List<Marine>, selectedDay: MutableIntState){
 	val scrollState = rememberScrollState()
 
 
@@ -151,8 +164,8 @@ fun DayCardRow(adjustablePadding: Dp){
 			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
 			.horizontalScroll(scrollState),
 			horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-			for (i in 1..7){
-				DayCard()
+			data.forEachIndexed{index, item ->
+				DayCard(item, index, selectedDay)
 			}
 		}
 	}
@@ -165,15 +178,22 @@ fun Table(
 	rows: Int = 4,
 	columns: Int = 15,
 	rowHeight: Dp = 80.dp,
-	columnHeight: Dp = 80.dp
+	columnHeight: Dp = 80.dp,
+	data: Marine
 ){
 	val scrollState = rememberScrollState()
+
+	val timeList = data.time.split(",")
+	val whList = data.wave_height.split(",")
+	val wpList = data.wave_period.split(",")
+	val wdList = data.wave_direction.split(",")
+
 	Row(modifier = modifier
 		.padding(top = 18.dp, start = 18.dp, end = 18.dp)
 		.horizontalScroll(scrollState)
 
 	) {
-		for (i in 1..columns){
+		timeList.forEachIndexed {index, _ ->
 			Column {
 				for (j in 1 .. rows){
 					Column(
@@ -186,7 +206,7 @@ fun Table(
 						horizontalAlignment = Alignment.CenterHorizontally,
 						verticalArrangement = Arrangement.Center
 					){
-						if (i == 1){
+						if (index == 0){
 							when(j){
 								1 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.clock), contentDescription = "")
 								2 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.wave), contentDescription = "")
@@ -195,12 +215,12 @@ fun Table(
 
 							}
 						} else if (j == 1){
-							Text((i-1).toString() + ":00")
+							Text(timeList[index].substring(12))
 						} else {
 							when(j){
-								2 -> Text("1m")
-								3 -> Text("5s")
-								4 -> Text("NW")
+								2 -> Text("${whList[index]}m")
+								3 -> Text("${wpList[index]}s")
+								4 -> Text("${wdList[index]}deg")
 							}
 						}
 					}
@@ -210,12 +230,15 @@ fun Table(
 	}
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
 	val scrollState = rememberScrollState()
 	var isActive = remember { mutableStateOf(0) }
 	val scope = rememberCoroutineScope()
-
+	//db.MarineDao().deleteAll()
+	val data = db.MarineDao().getMarine()
+	val selectedDay = remember { mutableIntStateOf(0) }
 
 	Column(modifier = Modifier
 		.fillMaxWidth()
@@ -247,7 +270,7 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 						navController.navigate(SearchScreen.route)
 					}
 				})
-			DayCardRow(adjustablePadding = 20.dp)
+			DayCardRow(adjustablePadding = 20.dp, data, selectedDay)
 		}
 		Column(modifier = Modifier
 			.fillMaxWidth()) {
@@ -288,7 +311,7 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 					}
 				)
 			}
-			Table()
+			Table(Modifier, data = data[selectedDay.intValue])
 
 		}
 	}
@@ -304,13 +327,13 @@ fun PreviewSearchBar(){
 	}
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewDayCard(){
-	SurfistaTheme {
-		DayCard()
-	}
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewDayCard(){
+//	SurfistaTheme {
+//		DayCard()
+//	}
+//}
 
 
 //@Preview(showBackground = true)
