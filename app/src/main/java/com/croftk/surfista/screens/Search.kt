@@ -59,6 +59,7 @@ import com.croftk.surfista.R
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
+import com.croftk.surfista.components.SearchResultModifier
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
@@ -88,7 +89,7 @@ fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDat
 		SearchBar(onClick = { value ->
 			println(value.value)
 		})
-		SearchResults(geoData, selectedLocation, openDialog, db)
+		SearchResults(geoData, selectedLocation, openDialog, db, navController)
 	}
 }
 
@@ -97,7 +98,8 @@ fun SearchResults(
 	geoData: List<GeoLocation>,
 	selectedLocation: MutableIntState,
 	openDialog: MutableState<Boolean>,
-	db: AppDatabase
+	db: AppDatabase,
+	navController: NavController
 ){
 	val scrollState = rememberScrollState()
 	Column(
@@ -109,7 +111,7 @@ fun SearchResults(
 		verticalArrangement = Arrangement.spacedBy(24.dp)
 	) {
 		geoData.forEachIndexed {index, item ->
-			SearchResult(item, index, selectedLocation, openDialog, db)
+			SearchResult(item, index, selectedLocation, openDialog, db, navController)
 		}
 	}
 }
@@ -120,17 +122,17 @@ fun SearchResult(
 	index: Int,
 	selectedLocation: MutableIntState,
 	openDialog: MutableState<Boolean>,
-	db: AppDatabase
+	db: AppDatabase,
+	navController: NavController
 ){
 	val scope = rememberCoroutineScope()
 	Row(
-		modifier = Modifier
-			.clip(RoundedCornerShape(12.dp))
-			.background(colorResource(R.color.white))
-			.width(350.dp)
-			.padding(12.dp)
+		modifier = SearchResultModifier()
 			.clickable {
 				scope.launch {
+					db.MarineDao().deleteAll()
+
+
 					val result = WaveServices.fetchWaveData(item.lat, item.lon)
 					if(result != null){
 						val timeChunked = result.hourly.time.chunked(24)
@@ -159,6 +161,7 @@ fun SearchResult(
 							))
 						}
 					}
+					navController.navigate(DashboardScreen.route)
 				}
 			}
 	) {

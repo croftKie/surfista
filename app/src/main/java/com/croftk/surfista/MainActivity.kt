@@ -1,10 +1,12 @@
 package com.croftk.surfista
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
@@ -64,6 +66,7 @@ class MainActivity : ComponentActivity() {
 	}
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigation(db: AppDatabase){
@@ -122,7 +125,7 @@ fun Navigation(db: AppDatabase){
 		bottomBar = {
 			if(bottomBarState.value){
 				BottomAppBar(
-					modifier = Modifier.height(80.dp),
+					modifier = Modifier.height(100.dp).padding(bottom = 12.dp),
 					containerColor = colorResource(R.color.offWhite)
 				) {
 					NavigationBar(
@@ -151,7 +154,7 @@ fun Navigation(db: AppDatabase){
 				Settings(innerPadding, navController)
 			}
 			composable(QuiverScreen.route) {
-				Quiver(innerPadding, navController)
+				Quiver(innerPadding, navController, db)
 			}
 			composable(LoginScreen.route) {
 				Login(innerPadding, navController)

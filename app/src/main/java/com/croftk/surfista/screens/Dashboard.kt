@@ -63,6 +63,96 @@ import com.croftk.surfista.utilities.httpServices.GeoServices
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
+	val scrollState = rememberScrollState()
+	var isActive = remember { mutableStateOf(0) }
+	val scope = rememberCoroutineScope()
+	//db.MarineDao().deleteAll()
+	val data = db.MarineDao().getMarine()
+	val selectedDay = remember { mutableIntStateOf(0) }
+
+	Column(modifier = Modifier
+		.fillMaxWidth()
+		.fillMaxHeight()
+		.background(colorResource(R.color.offWhite))
+		.padding(innerPadding)
+		.verticalScroll(scrollState),
+		verticalArrangement = Arrangement.SpaceEvenly
+	) {
+		Column(){
+			SearchBar(
+				adjustablePadding = 10.dp,
+				onClick = { value ->
+					scope.launch {
+						val result = GeoServices.fetchGeoData(
+							location = value.value,
+							key = BuildConfig.GEO_KEY
+						)
+						db.GeolocationDao().deleteAll()
+						result?.forEach { item ->
+							db.GeolocationDao().insertLocation(GeoLocation(
+								placeId = item.place_id,
+								name = Helpers.cleanGeoAddress(item.display_name),
+								lat = item.lat,
+								lon = item.lon,
+								importance = item.importance.toFloat()
+							))
+						}
+						navController.navigate(SearchScreen.route)
+					}
+				})
+			if(data.isNotEmpty()){
+				DayCardRow(adjustablePadding = 20.dp, data, selectedDay)
+			}
+		}
+		Column(modifier = Modifier
+			.fillMaxWidth()) {
+			Row(
+				modifier = Modifier
+					.padding(5.dp)
+					.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				TabButton(
+					text = "Waves",
+					width = 100.dp,
+					drawable = R.drawable.wave,
+					active = isActive.value == 0,
+					fontSize = 15.sp,
+					onClick = {
+						isActive.value = 0
+					}
+				)
+				TabButton(
+					text = "Wind",
+					width = 100.dp,
+					drawable = R.drawable.wind,
+					active = isActive.value == 1,
+					fontSize = 15.sp,
+					onClick = {
+						isActive.value = 1
+					}
+				)
+				TabButton(
+					text = "Weather",
+					width = 100.dp,
+					drawable = R.drawable.sun,
+					active = isActive.value == 2,
+					fontSize = 15.sp,
+					onClick = {
+						isActive.value = 2
+					}
+				)
+			}
+			if(data.isNotEmpty()){
+				Table(Modifier, data = data[selectedDay.intValue])
+			}
+		}
+	}
+}
+
 
 @Composable
 fun DayCard(item: Marine, position: Int, selectedDay: MutableIntState){
@@ -230,122 +320,4 @@ fun Table(
 	}
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
-	val scrollState = rememberScrollState()
-	var isActive = remember { mutableStateOf(0) }
-	val scope = rememberCoroutineScope()
-	//db.MarineDao().deleteAll()
-	val data = db.MarineDao().getMarine()
-	val selectedDay = remember { mutableIntStateOf(0) }
 
-	Column(modifier = Modifier
-		.fillMaxWidth()
-		.fillMaxHeight()
-		.background(colorResource(R.color.offWhite))
-		.padding(innerPadding)
-		.verticalScroll(scrollState),
-		verticalArrangement = Arrangement.SpaceEvenly
-	) {
-		Column(){
-			SearchBar(
-				adjustablePadding = 10.dp,
-				onClick = { value ->
-					scope.launch {
-						val result = GeoServices.fetchGeoData(
-							location = value.value,
-							key = BuildConfig.GEO_KEY
-						)
-						db.GeolocationDao().deleteAll()
-						result?.forEach { item ->
-							db.GeolocationDao().insertLocation(GeoLocation(
-								placeId = item.place_id,
-								name = Helpers.cleanGeoAddress(item.display_name),
-								lat = item.lat,
-								lon = item.lon,
-								importance = item.importance.toFloat()
-							))
-						}
-						navController.navigate(SearchScreen.route)
-					}
-				})
-			DayCardRow(adjustablePadding = 20.dp, data, selectedDay)
-		}
-		Column(modifier = Modifier
-			.fillMaxWidth()) {
-			Row(
-				modifier = Modifier
-					.padding(5.dp)
-					.fillMaxWidth(),
-				horizontalArrangement = Arrangement.SpaceEvenly
-			) {
-				TabButton(
-					text = "Waves",
-					width = 100.dp,
-					drawable = R.drawable.wave,
-					active = isActive.value == 0,
-					fontSize = 15.sp,
-					onClick = {
-						isActive.value = 0
-					}
-				)
-				TabButton(
-					text = "Wind",
-					width = 100.dp,
-					drawable = R.drawable.wind,
-					active = isActive.value == 1,
-					fontSize = 15.sp,
-					onClick = {
-						isActive.value = 1
-					}
-				)
-				TabButton(
-					text = "Weather",
-					width = 100.dp,
-					drawable = R.drawable.sun,
-					active = isActive.value == 2,
-					fontSize = 15.sp,
-					onClick = {
-						isActive.value = 2
-					}
-				)
-			}
-			Table(Modifier, data = data[selectedDay.intValue])
-
-		}
-	}
-}
-
-
-// Previews
-@Preview(showBackground = true)
-@Composable
-fun PreviewSearchBar(){
-	SurfistaTheme {
-		SearchBar(adjustablePadding = 10.dp)
-	}
-}
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewDayCard(){
-//	SurfistaTheme {
-//		DayCard()
-//	}
-//}
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewDashboard(){
-//	Scaffold(
-//		bottomBar = {
-//			BottomAppBar(containerColor = colorResource(R.color.offWhite)) {
-//				NavigationBar()
-//			}
-//		}
-//	) { innerPadding ->
-//		Dashboard(innerPadding, navController = rememberNavController())
-//	}
-//}

@@ -21,11 +21,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,10 +40,13 @@ import com.croftk.surfista.components.ClickableIcon
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
+import com.croftk.surfista.components.SearchResultModifier
 import com.croftk.surfista.components.TitleBar
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.Board
 
 @Composable
-fun BoardCardRow(adjustablePadding: Dp){
+fun BoardCardRow(adjustablePadding: Dp, quiver: List<Board>){
 	val scrollState = rememberScrollState()
 
 	Column(
@@ -64,15 +70,15 @@ fun BoardCardRow(adjustablePadding: Dp){
 			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
 			.horizontalScroll(scrollState),
 			horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-			for (i in 1..7){
-				BoardCard()
+			quiver.forEach{board->
+				BoardCard(board)
 			}
 		}
 	}
 }
 
 @Composable
-fun BoardCard(){
+fun BoardCard(board: Board){
 	Column(modifier = Modifier
 		.clip(shape = RoundedCornerShape(12.dp))
 		.background(colorResource(R.color.white))
@@ -94,8 +100,8 @@ fun BoardCard(){
 				modifier = Modifier.fillMaxWidth().fillMaxHeight(),
 				horizontalAlignment = Alignment.End,
 				verticalArrangement = Arrangement.SpaceBetween) {
-				Text(text = "Board Brand", fontSize = 25.sp)
-				Text(text = "9ft", fontSize = 25.sp)
+				Text(text = board.type, fontSize = 25.sp)
+				Text(text = board.size, fontSize = 25.sp)
 				Row(
 					modifier = Modifier.padding(6.dp),
 					horizontalArrangement = Arrangement.spacedBy(32.dp)
@@ -121,31 +127,69 @@ fun BoardCard(){
 
 
 @Composable
-fun Quiver(innerPadding: PaddingValues, navController: NavController){
+fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
 	val vertScrollState = rememberScrollState()
+	val boards: List<Map<String, List<String>>> = listOf(
+		mapOf(
+			"Fish" to listOf("5'6", "5'8", "5'10", "6'0", "6'2", "6'4")
+		),
+		mapOf(
+			"Shortboard" to listOf("5'10", "6'0", "6'2", "6'4", "6'6", "6'8", "6'10")
+		),
+		mapOf(
+			"Midlength" to listOf("7'0", "7'2", "7'4", "7'6", "7'8", "7'10")
+		),
+		mapOf(
+			"Longboard" to listOf("8'0", "8'2", "8'4", "8'6", "8'8", "8'10", "9'0", "9'2", "9'4", "9'6", "9'8", "9'10", "10'0")
+		),
+	)
+	val searchInput = remember { mutableStateOf("") }
+
+	val myQuiver = db.BoardDao().getAll()
+
+	println(myQuiver)
+
 	Column(
 		modifier = Modifier.fillMaxHeight().padding(innerPadding).fillMaxWidth().background(colorResource(R.color.offWhite)),
 		horizontalAlignment = Alignment.CenterHorizontally
 	){
-		BoardCardRow(12.dp)
-		SearchBar(12.dp)
+		BoardCardRow(12.dp, myQuiver)
+		SearchBar(
+			12.dp,
+			value = searchInput,
+			onClick = {
+				updatedText ->
+				searchInput.value = updatedText.value
+			}
+		)
 		Column(
 			modifier = Modifier
 				.padding(12.dp)
 				.verticalScroll(vertScrollState)
-				.fillMaxWidth()
+				.fillMaxWidth(),
+			verticalArrangement = Arrangement.spacedBy(12.dp)
 		) {
-			for (i in 1..10){
-				SearchResult()
+			boards.forEachIndexed{index, boardType ->
+				boardType.entries.forEach{ entry ->
+					entry.value.forEach { value ->
+						println(searchInput.value)
+						if (
+							entry.key.lowercase().contains(searchInput.value.lowercase()) ||
+							value.lowercase().contains(searchInput.value.lowercase())
+							){
+							SearchResult(entry.key, value, db)
+						}
+					}
+				}
 			}
 		}
 	}
 }
 
 @Composable
-fun SearchResult(){
+fun SearchResult(boardType: String, value: String, db: AppDatabase){
 	Row(
-		modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+		modifier = SearchResultModifier(),
 		horizontalArrangement = Arrangement.SpaceAround,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -155,42 +199,27 @@ fun SearchResult(){
 			contentDesc = R.string.search_mag_desc
 		)
 		Column(modifier = Modifier.fillMaxWidth(0.5f)) {
-			Text("Board Brand", fontSize = 30.sp)
-			Row(
+			Column(
 				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.SpaceBetween
+				verticalArrangement = Arrangement.spacedBy(12.dp)
 			) {
-				Text("Longboard", fontSize = 20.sp)
-				Text("9.1ft", fontSize = 20.sp)
+				Text(boardType, fontSize = 20.sp)
+				Text("${value}ft", fontSize = 20.sp)
 			}
 		}
 		ClickableIcon(
 			modifier = Modifier.height(30.dp),
 			drawableImage = R.drawable.add,
 			contentDesc = R.string.search_mag_desc,
-			click = {}
+			click = {
+				db.BoardDao().insertBoard(Board(
+					id = (1..100).random(),
+					name = "My Board",
+					type = boardType,
+					size = value
+				))
+			}
 		)
 	}
 }
 
-
-@Preview
-@Composable
-fun PreviewBoardCard(){
-	BoardCard()
-}
-
-
-@Preview
-@Composable
-fun PreviewQuiver(){
-	Scaffold(
-		bottomBar = {
-			BottomAppBar {
-				NavigationBar()
-			}
-		}
-	) { innerPadding ->
-		Quiver(innerPadding, navController = rememberNavController())
-	}
-}
