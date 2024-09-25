@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -245,7 +246,30 @@ fun SearchBar(
 }
 
 
+@Composable
+fun Empty(modifier: Modifier = Modifier, text: String = "No Data Selected Yet"){
+	Column(
+		modifier = modifier.fillMaxWidth().height(200.dp),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center
+	) {
+		ImageIcon(
+			Modifier.height(90.dp).alpha(0.25f).padding(bottom = 12.dp),
+			drawableImage = R.drawable.surfboard,
+			contentDesc = R.string.search_mag_desc
+		)
+		Text(modifier = Modifier.alpha(0.5f), text = text, fontSize = 20.sp)
+	}
+}
+
+
 // Previews
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewEmpty(){
+	Empty()
+}
 
 @Preview(showBackground = true)
 @Composable

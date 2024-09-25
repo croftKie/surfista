@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ClickableIcon
+import com.croftk.surfista.components.Empty
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
@@ -58,7 +59,8 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: List<Board>){
 	) {
 		Column(
 			modifier = Modifier
-				.padding(start = 12.dp, top = 12.dp)
+				.padding(start = 12.dp, top = 12.dp).fillMaxWidth(),
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Text(
 				"My Boards",
@@ -67,11 +69,16 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: List<Board>){
 			Text("Your current quiver of surfboards")
 		}
 		Row(modifier = Modifier
-			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
+			.padding(bottom = adjustablePadding, start = adjustablePadding / 2).fillMaxWidth()
 			.horizontalScroll(scrollState),
-			horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-			quiver.forEach{board->
-				BoardCard(board)
+			horizontalArrangement = if(quiver.isNotEmpty()) Arrangement.spacedBy(12.dp) else Arrangement.Center
+		) {
+			if (quiver.isNotEmpty()){
+				quiver.forEach{board->
+					BoardCard(board)
+				}
+			} else {
+				Empty()
 			}
 		}
 	}

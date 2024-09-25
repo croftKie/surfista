@@ -49,6 +49,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.BuildConfig
 import com.croftk.surfista.R
+import com.croftk.surfista.components.Empty
 import com.croftk.surfista.ui.theme.SurfistaTheme
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
@@ -78,10 +79,13 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 		.fillMaxHeight()
 		.background(colorResource(R.color.offWhite))
 		.padding(innerPadding)
-		.verticalScroll(scrollState),
-		verticalArrangement = Arrangement.SpaceEvenly
+		.verticalScroll(scrollState)
 	) {
-		Column(){
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.fillMaxHeight(),
+		){
 			SearchBar(
 				adjustablePadding = 10.dp,
 				onClick = { value ->
@@ -105,10 +109,14 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 				})
 			if(data.isNotEmpty()){
 				DayCardRow(adjustablePadding = 20.dp, data, selectedDay)
+			} else {
+				Empty()
 			}
 		}
 		Column(modifier = Modifier
-			.fillMaxWidth()) {
+			.fillMaxWidth()
+			.fillMaxHeight(),
+		) {
 			Row(
 				modifier = Modifier
 					.padding(5.dp)
@@ -148,6 +156,8 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 			}
 			if(data.isNotEmpty()){
 				Table(Modifier, data = data[selectedDay.intValue])
+			} else {
+				Empty()
 			}
 		}
 	}
