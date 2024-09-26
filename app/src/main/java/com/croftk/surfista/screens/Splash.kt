@@ -34,12 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.utilities.DashboardScreen
 import com.croftk.surfista.utilities.LoginScreen
 import kotlinx.coroutines.delay
 
 
 @Composable
-fun Splash(innerPadding: PaddingValues, navController: NavController){
+fun Splash(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
 	val scale = remember {
 		Animatable(0f)
 	}
@@ -55,7 +57,20 @@ fun Splash(innerPadding: PaddingValues, navController: NavController){
 			)
 		)
 		delay(3000L)
-		navController.navigate(LoginScreen.route)
+
+		val user = db.userDao().getAll()
+
+		if (user.isNotEmpty()){
+			val isLoggedIn = user[0].loggedIn
+			if (isLoggedIn){
+				navController.navigate(DashboardScreen.route)
+			} else {
+				navController.navigate(LoginScreen.route)
+			}
+		} else {
+			navController.navigate(LoginScreen.route)
+		}
+
 	}
 
 	Column(
@@ -79,11 +94,11 @@ fun Splash(innerPadding: PaddingValues, navController: NavController){
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewSplash(){
-	Scaffold(
-	) { innerPadding ->
-		Splash(innerPadding, navController = rememberNavController())
-	}
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewSplash(){
+//	Scaffold(
+//	) { innerPadding ->
+//		Splash(innerPadding, navController = rememberNavController())
+//	}
+//}

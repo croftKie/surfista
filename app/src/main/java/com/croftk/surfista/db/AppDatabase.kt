@@ -14,7 +14,7 @@ import com.croftk.surfista.db.entities.User
 
 @Database(
 	entities = [User::class, GeoLocation::class, Marine::class, Board::class],
-	version = 4,
+	version = 7,
 //	autoMigrations = [
 //		AutoMigration (from = 1, to = 2)
 //	],

@@ -33,6 +33,9 @@ import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.components.TitleBar
+import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.User
+import com.croftk.surfista.utilities.LoginScreen
 
 
 @Composable
@@ -50,7 +53,8 @@ fun ListItem(modifier: Modifier, itemText: String, color: Color, backgroundColor
 }
 
 @Composable
-fun Profile(){
+fun Profile(db: AppDatabase, navController: NavController){
+	val user = db.userDao().getAll()[0]
 	Column(
 		modifier = Modifier.fillMaxHeight(0.3f),
 		verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -65,13 +69,23 @@ fun Profile(){
 			painter = painterResource(R.drawable.wave),
 			contentDescription = ""
 		)
-		Text("username@email.com")
-		TabButton(text = "Logout", iconActive = false) { }
+		Text(user.email)
+		TabButton(text = "Logout", iconActive = false) {
+			db.userDao().updateUser(
+				User(
+					uid = user.uid,
+					email = user.email,
+					password = user.password,
+					loggedIn = false
+				)
+			)
+			navController.navigate(LoginScreen.route)
+		}
 	}
 }
 
 @Composable
-fun Settings(innerPadding: PaddingValues, navController: NavController){
+fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
 	Column(
 		modifier = Modifier
 			.background(colorResource(R.color.offWhite))
@@ -80,7 +94,7 @@ fun Settings(innerPadding: PaddingValues, navController: NavController){
 			.fillMaxHeight(),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		Profile()
+		Profile(db, navController)
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
@@ -114,16 +128,16 @@ fun Settings(innerPadding: PaddingValues, navController: NavController){
 }
 
 
-@Composable
-@Preview
-fun PreviewSettings(){
-	Scaffold(
-		bottomBar = {
-			BottomAppBar {
-				NavigationBar()
-			}
-		}
-	) { innerPadding ->
-		Settings(innerPadding, navController = rememberNavController())
-	}
-}
+//@Composable
+//@Preview
+//fun PreviewSettings(){
+//	Scaffold(
+//		bottomBar = {
+//			BottomAppBar {
+//				NavigationBar()
+//			}
+//		}
+//	) { innerPadding ->
+//		Settings(innerPadding, navController = rememberNavController())
+//	}
+//}

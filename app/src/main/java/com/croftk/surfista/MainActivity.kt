@@ -151,19 +151,19 @@ fun Navigation(db: AppDatabase){
 				Dashboard(innerPadding, navController, db)
 			}
 			composable(SettingsScreen.route) {
-				Settings(innerPadding, navController)
+				Settings(innerPadding, navController, db)
 			}
 			composable(QuiverScreen.route) {
 				Quiver(innerPadding, navController, db)
 			}
 			composable(LoginScreen.route) {
-				Login(innerPadding, navController)
+				Login(innerPadding, navController, db)
 			}
 			composable(SearchScreen.route) {
 				Search(innerPadding, navController, db)
 			}
 			composable(SplashScreen.route) {
-				Splash(innerPadding, navController)
+				Splash(innerPadding, navController, db)
 			}
 		}
 	}
