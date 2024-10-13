@@ -39,7 +39,13 @@ import com.croftk.surfista.utilities.LoginScreen
 
 
 @Composable
-fun ListItem(modifier: Modifier, itemText: String, color: Color, backgroundColor: Color){
+fun ListItem(
+	modifier: Modifier,
+	itemText: String,
+	color: Color,
+	backgroundColor: Color,
+	image: Int = R.drawable.downarrow,
+){
 	Column(modifier = Modifier.background(backgroundColor)){
 		Row(
 			modifier = modifier.padding(12.dp).fillMaxWidth(0.9f),
@@ -47,7 +53,7 @@ fun ListItem(modifier: Modifier, itemText: String, color: Color, backgroundColor
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			Text(itemText, fontSize = 25.sp)
-			ImageIcon(Modifier.height(20.dp), R.drawable.downarrow, R.string.search_mag_desc)
+			ImageIcon(Modifier.height(20.dp), image, R.string.search_mag_desc)
 		}
 	}
 }
@@ -107,11 +113,29 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					.background(colorResource(R.color.white)),
 				horizontalAlignment = Alignment.CenterHorizontally
 			) {
-				ListItem(Modifier, "Change Email", Color.DarkGray, Color.Transparent)
+				ListItem(
+					Modifier,
+					"Change Email",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.mail
+				)
 				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
-				ListItem(Modifier, "Change Password", Color.DarkGray, Color.Transparent)
+				ListItem(
+					Modifier,
+					"Change Password",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.padlock
+				)
 				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
-				ListItem(Modifier, "Toggle Notifications", Color.DarkGray, Color.Transparent)
+				ListItem(
+					Modifier,
+					"Toggle Notifications",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.notification
+				)
 			}
 			Column(
 				modifier = Modifier
@@ -119,9 +143,21 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					.background(colorResource(R.color.white)),
 				horizontalAlignment = Alignment.CenterHorizontally
 			){
-				ListItem(Modifier, "Privacy Policy", Color.DarkGray, Color.Transparent)
+				ListItem(
+					Modifier,
+					"Privacy Policy",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.googledocs
+				)
 				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
-				ListItem(Modifier, "Delete Account", Color.DarkGray, Color.Transparent)
+				ListItem(
+					Modifier,
+					"Delete Account",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.trash
+				)
 			}
 		}
 	}

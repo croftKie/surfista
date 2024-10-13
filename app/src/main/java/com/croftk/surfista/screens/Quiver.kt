@@ -154,7 +154,6 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 
 	val myQuiver = db.BoardDao().getAll()
 
-	println(myQuiver)
 
 	Column(
 		modifier = Modifier.fillMaxHeight().padding(innerPadding).fillMaxWidth().background(colorResource(R.color.offWhite)),
@@ -164,6 +163,7 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 		SearchBar(
 			12.dp,
 			value = searchInput,
+			buttonActive = false,
 			onClick = {
 				updatedText ->
 				searchInput.value = updatedText.value
@@ -174,7 +174,8 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 				.padding(12.dp)
 				.verticalScroll(vertScrollState)
 				.fillMaxWidth(),
-			verticalArrangement = Arrangement.spacedBy(12.dp)
+			verticalArrangement = Arrangement.spacedBy(12.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			boards.forEachIndexed{index, boardType ->
 				boardType.entries.forEach{ entry ->

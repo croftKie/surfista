@@ -215,7 +215,8 @@ fun InputField(
 fun SearchBar(
 	adjustablePadding: Dp = 12.dp,
 	onClick: (text: MutableState<String>) -> Unit = {},
-	value: MutableState<String> = mutableStateOf("")
+	value: MutableState<String> = mutableStateOf(""),
+	buttonActive: Boolean = true,
 ) {
 
 	Row(
@@ -226,27 +227,29 @@ fun SearchBar(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	){
-		InputField(value = value)
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight()
-				.clip(shape = RoundedCornerShape(12.dp))
-				.background(colorResource(R.color.blue)),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center
-		){
-			ClickableIcon(
-				Modifier
+		InputField(value = value, width = if(buttonActive) 0.8f else 1.0f)
+		if(buttonActive){
+			Column(
+				modifier = Modifier
 					.fillMaxWidth()
-					.height(20.dp)
-					.width(20.dp),
-				R.drawable.mag,
-				R.string.search_mag_desc,
-				click = {
-					onClick(value)
-				}
-			)
+					.fillMaxHeight()
+					.clip(shape = RoundedCornerShape(12.dp))
+					.background(colorResource(R.color.blue)),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.Center
+			){
+				ClickableIcon(
+					Modifier
+						.fillMaxWidth()
+						.height(20.dp)
+						.width(20.dp),
+					R.drawable.mag,
+					R.string.search_mag_desc,
+					click = {
+						onClick(value)
+					}
+				)
+			}
 		}
 	}
 }

@@ -64,6 +64,7 @@ import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.utilities.DashboardScreen
+import com.croftk.surfista.utilities.Helpers
 import com.croftk.surfista.utilities.httpServices.WaveServices
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
@@ -132,34 +133,9 @@ fun SearchResult(
 				scope.launch {
 					db.MarineDao().deleteAll()
 
-
 					val result = WaveServices.fetchWaveData(item.lat, item.lon)
 					if(result != null){
-						val timeChunked = result.hourly.time.chunked(24)
-						val whChunked = result.hourly.wave_height.chunked(24)
-						val wpChunked = result.hourly.wave_period.chunked(24)
-						val wdChunked = result.hourly.wave_direction.chunked(24)
-
-						for (i in 1..timeChunked.size){
-							db.MarineDao().insertMarineData(Marine(
-								id = timeChunked[i - 1][0].substring(0, 10),
-								name = item.name,
-								lat = item.lat.toDouble(),
-								lon = item.lon.toDouble(),
-								time = timeChunked[i - 1].toString()
-									.replace("[", "")
-									.replace("]", ""),
-								wave_height = whChunked[i - 1].toString()
-									.replace("[", "")
-									.replace("]", ""),
-								wave_period = wpChunked[i - 1].toString()
-									.replace("[", "")
-									.replace("]", ""),
-								wave_direction = wdChunked[i - 1].toString()
-									.replace("[", "")
-									.replace("]", "")
-							))
-						}
+						Helpers.storeFetchedData(result, item, db.MarineDao())
 					}
 					navController.navigate(DashboardScreen.route)
 				}
