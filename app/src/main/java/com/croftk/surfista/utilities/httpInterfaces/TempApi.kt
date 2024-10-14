@@ -1,7 +1,6 @@
 package com.croftk.surfista.utilities.httpInterfaces
 
 import com.croftk.surfista.utilities.dataDefinitions.Tempdata
-import com.croftk.surfista.utilities.dataDefinitions.Wavedata
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -11,6 +10,6 @@ interface TempApi {
 	suspend fun getTempData(
 		@Query("latitude") latitude: String,
 		@Query("longitude") longitude: String,
-		@Query("hourly") hourly: String = "temperature_2m,rain,cloud_cover"
+		@Query("hourly") hourly: String = "apparent_temperature,rain,cloud_cover"
 	): Response<Tempdata>
 }

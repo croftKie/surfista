@@ -58,6 +58,8 @@ import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
+import com.croftk.surfista.db.entities.Temperature
+import com.croftk.surfista.db.entities.Wind
 import com.croftk.surfista.utilities.Helpers
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.httpServices.GeoServices
@@ -69,10 +71,15 @@ import java.time.LocalDate
 fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
 	val scrollState = rememberScrollState()
 	var isActive = remember { mutableStateOf(0) }
+	val selectedDay = remember { mutableIntStateOf(0) }
 	val scope = rememberCoroutineScope()
 	//db.MarineDao().deleteAll()
-	val data = db.MarineDao().getMarine()
-	val selectedDay = remember { mutableIntStateOf(0) }
+
+	val waveData = db.MarineDao().getMarine()
+	val tempData = db.TempDao().getTempData()
+	val windData = db.WindDao().getWindData()
+
+	println(tempData)
 
 	Column(modifier = Modifier
 		.fillMaxWidth()
@@ -107,8 +114,8 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 						navController.navigate(SearchScreen.route)
 					}
 				})
-			if(data.isNotEmpty()){
-				DayCardRow(adjustablePadding = 20.dp, data, selectedDay)
+			if(waveData.isNotEmpty()){
+				DayCardRow(adjustablePadding = 20.dp, waveData, selectedDay)
 			} else {
 				Empty()
 			}
@@ -134,9 +141,9 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 					}
 				)
 				TabButton(
-					text = "Wind",
+					text = "Weather",
 					width = 100.dp,
-					drawable = R.drawable.wind,
+					drawable = R.drawable.sun,
 					active = isActive.value == 1,
 					fontSize = 15.sp,
 					onClick = {
@@ -144,9 +151,9 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 					}
 				)
 				TabButton(
-					text = "Weather",
+					text = "Wind",
 					width = 100.dp,
-					drawable = R.drawable.sun,
+					drawable = R.drawable.wind,
 					active = isActive.value == 2,
 					fontSize = 15.sp,
 					onClick = {
@@ -154,8 +161,31 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 					}
 				)
 			}
-			if(data.isNotEmpty()){
-				Table(Modifier, data = data[selectedDay.intValue])
+			if(waveData.isNotEmpty()){
+				when(isActive.value){
+					0 -> Table(
+						Modifier,
+						timeData = waveData[selectedDay.intValue].time.split(","),
+						rowOneValues = waveData[selectedDay.intValue].wave_height.split(","),
+						rowTwoValues = waveData[selectedDay.intValue].wave_period.split(","),
+						rowThreeValues = waveData[selectedDay.intValue].wave_direction.split(",")
+						)
+					1 -> Table(
+						Modifier,
+						timeData = tempData[selectedDay.intValue].time.split(","),
+						rowOneValues = tempData[selectedDay.intValue].temperature.split(","),
+						rowTwoValues = tempData[selectedDay.intValue].rain.split(","),
+						rowThreeValues = tempData[selectedDay.intValue].cloud_cover.split(",")
+						)
+					2 -> Table(
+						Modifier,
+						timeData = windData[selectedDay.intValue].time.split(","),
+						rowOneValues = windData[selectedDay.intValue].wind_speed.split(","),
+						rowTwoValues = windData[selectedDay.intValue].wind_direction.split(","),
+						rowThreeValues = windData[selectedDay.intValue].visibility.split(",")
+						)
+					else -> Empty()
+				}
 			} else {
 				Empty()
 			}
@@ -236,8 +266,6 @@ fun DayCard(item: Marine, position: Int, selectedDay: MutableIntState){
 		}
 	}
 }
-
-
 @Composable
 fun DayCardRow(adjustablePadding: Dp, data: List<Marine>, selectedDay: MutableIntState){
 	val scrollState = rememberScrollState()
@@ -271,29 +299,26 @@ fun DayCardRow(adjustablePadding: Dp, data: List<Marine>, selectedDay: MutableIn
 	}
 }
 
-
 @Composable
 fun Table(
 	modifier: Modifier = Modifier,
 	rows: Int = 4,
-	columns: Int = 15,
 	rowHeight: Dp = 80.dp,
 	columnHeight: Dp = 80.dp,
-	data: Marine
+	timeData: List<String>,
+	rowOneValues: List<String>,
+	rowTwoValues: List<String>,
+	rowThreeValues: List<String>,
+	icons: List<Int> = listOf(R.drawable.clock, R.drawable.wave, R.drawable.stopwatch, R.drawable.compass)
 ){
 	val scrollState = rememberScrollState()
-
-	val timeList = data.time.split(",")
-	val whList = data.wave_height.split(",")
-	val wpList = data.wave_period.split(",")
-	val wdList = data.wave_direction.split(",")
 
 	Row(modifier = modifier
 		.padding(top = 18.dp, start = 18.dp, end = 18.dp)
 		.horizontalScroll(scrollState)
 
 	) {
-		timeList.forEachIndexed {index, _ ->
+		timeData.forEachIndexed {index, _ ->
 			Column {
 				for (j in 1 .. rows){
 					Column(
@@ -308,19 +333,23 @@ fun Table(
 					){
 						if (index == 0){
 							when(j){
-								1 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.clock), contentDescription = "")
-								2 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.wave), contentDescription = "")
-								3 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.stopwatch), contentDescription = "")
-								4 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(R.drawable.compass), contentDescription = "")
+								1 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(icons[0]), contentDescription = "")
+								2 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(icons[1]), contentDescription = "")
+								3 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(icons[2]), contentDescription = "")
+								4 -> Icon(modifier = Modifier. height(30.dp), painter = painterResource(icons[3]), contentDescription = "")
 
 							}
 						} else if (j == 1){
-							Text(timeList[index].substring(12))
+							Text(timeData[index].substring(12))
 						} else {
+							val v1 = if (rowOneValues[index] !== "null") { "${rowOneValues[index]}m" } else { "N/A" }
+							val v2 = if (rowTwoValues[index] !== "null") { "${rowTwoValues[index]}deg" } else { "N/A" }
+							val v3 = if (rowThreeValues[index] !== "null") { "${rowThreeValues[index].toFloat() / 1000}km" } else { "N/A" }
+
 							when(j){
-								2 -> Text("${whList[index]}m")
-								3 -> Text("${wpList[index]}s")
-								4 -> Text("${wdList[index]}deg")
+								2 -> Text(v1)
+								3 -> Text(v2)
+								4 -> Text(v3)
 							}
 						}
 					}

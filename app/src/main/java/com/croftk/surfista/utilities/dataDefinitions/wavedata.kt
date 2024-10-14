@@ -10,15 +10,15 @@ data class HourlyWavedata(
 )
 data class HourlyTempdata(
 	@JsonProperty("time") val time: List<String>,
-	@JsonProperty("wave_height") val wave_height: List<Float>,
-	@JsonProperty("wave_direction") val wave_direction: List<Int>,
-	@JsonProperty("wave_period") val wave_period: List<Float>
+	@JsonProperty("apparent_temperature") val apparent_temperature: List<Any>,
+	@JsonProperty("rain") val rain: List<Float>,
+	@JsonProperty("cloud_cover") val cloud_cover: List<Int>
 )
 data class HourlyWinddata(
 	@JsonProperty("time") val time: List<String>,
-	@JsonProperty("wave_height") val wave_height: List<Float>,
-	@JsonProperty("wave_direction") val wave_direction: List<Int>,
-	@JsonProperty("wave_period") val wave_period: List<Float>
+	@JsonProperty("wind_speed_10m") val wind_speed_10m: List<Any>,
+	@JsonProperty("visibility") val visibility: List<Float>,
+	@JsonProperty("wind_direction_10m") val wind_direction_10m: List<Int>
 )
 
 data class Wavedata(

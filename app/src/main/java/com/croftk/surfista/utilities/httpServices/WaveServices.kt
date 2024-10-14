@@ -14,10 +14,10 @@ object WaveServices {
 		return RetrofitInstance.getInstance("https://marine-api.open-meteo.com/v1/").create(WaveApi::class.java)
 	}
 	private fun TempApi(): TempApi{
-		return RetrofitInstance.getInstance("https://marine-api.open-meteo.com/v1/").create(TempApi::class.java)
+		return RetrofitInstance.getInstance("https://api.open-meteo.com/v1/").create(TempApi::class.java)
 	}
 	private fun WindApi(): WindApi{
-		return RetrofitInstance.getInstance("https://marine-api.open-meteo.com/v1/").create(WindApi::class.java)
+		return RetrofitInstance.getInstance("https://api.open-meteo.com/v1/").create(WindApi::class.java)
 	}
 
 	suspend fun fetchWaveData(latitude: String, longitude: String): Wavedata? {

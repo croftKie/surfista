@@ -132,11 +132,25 @@ fun SearchResult(
 			.clickable {
 				scope.launch {
 					db.MarineDao().deleteAll()
+					db.TempDao().deleteAll()
+					db.WindDao().deleteAll()
 
-					val result = WaveServices.fetchWaveData(item.lat, item.lon)
-					if(result != null){
-						Helpers.storeFetchedData(result, item, db.MarineDao())
+					val waveResult = WaveServices.fetchWaveData(item.lat, item.lon)
+					if(waveResult != null){
+						Helpers.storeFetchedData(waveResult, item, db.MarineDao())
 					}
+
+					val tempResult = WaveServices.fetchTempData(item.lat, item.lon)
+
+					if(tempResult != null){
+						Helpers.storeFetchedData(tempResult, item, db.TempDao())
+					}
+
+					val windResult = WaveServices.fetchWindData(item.lat, item.lon)
+					if(windResult != null){
+						Helpers.storeFetchedData(windResult, item, db.WindDao())
+					}
+
 					navController.navigate(DashboardScreen.route)
 				}
 			}

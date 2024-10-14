@@ -10,6 +10,6 @@ interface WindApi {
 	suspend fun getWindData(
 		@Query("latitude") latitude: String,
 		@Query("longitude") longitude: String,
-		@Query("hourly") hourly: String = "visibility,wind_speed_10m,wind_direction_10m"
+		@Query("hourly") hourly: String = "wind_speed_10m,visibility,wind_direction_10m"
 	): Response<Winddata>
 }
