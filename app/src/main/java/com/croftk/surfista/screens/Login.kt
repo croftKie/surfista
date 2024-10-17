@@ -1,6 +1,9 @@
 package com.croftk.surfista.screens
 
+import android.content.ContentValues.TAG
 import android.renderscript.ScriptGroup.Input
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,17 +41,29 @@ import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.User
 import com.croftk.surfista.utilities.DashboardScreen
+import com.google.firebase.auth.FirebaseAuth
+import kotlin.reflect.KFunction2
 
 
 @Composable
-fun Login(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
-	var isSignUp = remember { mutableStateOf(false) }
+fun Login(
+	innerPadding: PaddingValues,
+	navController: NavController,
+	db: AppDatabase,
+	auth: FirebaseAuth,
+	createAccount: (String, String, NavController)->Unit,
+	signInWithEmailAndPassword: (String, String, NavController)->Unit
+){
+	val isSignUp = remember { mutableStateOf(false) }
 	val email = remember { mutableStateOf("") }
 	val pass = remember { mutableStateOf("") }
 	val confirm = remember { mutableStateOf("") }
 	val isUser = remember { mutableStateOf<Boolean?>(null) }
 	Column(
-		modifier = Modifier.fillMaxWidth().fillMaxHeight().background(colorResource(R.color.offWhite)),
+		modifier = Modifier
+			.fillMaxWidth()
+			.fillMaxHeight()
+			.background(colorResource(R.color.offWhite)),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.SpaceEvenly
 	) {
@@ -91,39 +106,15 @@ fun Login(innerPadding: PaddingValues, navController: NavController, db: AppData
 			iconActive = false,
 			active = true
 		) {
-			val user = db.userDao().checkUserExists(email.value, pass.value)
 
 			// SIGN UP LOGIC
-			if(isSignUp.value && user.isEmpty()){
-				db.userDao().insertUser(User(1, email.value, pass.value, true))
-				isUser.value = true
-			} else {
-				println("User already exists")
+			if(isSignUp.value && auth.currentUser == null){
+				createAccount(email.value, pass.value, navController)
 			}
 
 			//SIGN IN LOGIC
-			if(!isSignUp.value){
-				if (user.size != 1) {
-					isUser.value = false
-				} else {
-					isUser.value = true
-					db.userDao().updateUser(User(
-						uid = user[0].uid,
-						email = user[0].email,
-						password = user[0].password,
-						loggedIn = true
-					))
-				}
-			}
-
-			if (isUser.value != null && isUser.value!!){
-				navController.navigate(DashboardScreen.route)
-			}
-
-		}
-		if(isUser.value != null){
-			if(!isUser.value!!){
-				Text("User Not Found, Please Sign Up")
+			if(!isSignUp.value && auth.currentUser == null){
+				signInWithEmailAndPassword(email.value, pass.value, navController)
 			}
 		}
 		Text("Switch Mode", modifier = Modifier.clickable { isSignUp.value = !isSignUp.value })

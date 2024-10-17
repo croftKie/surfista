@@ -4,6 +4,7 @@ plugins {
 	alias(libs.plugins.android.application)
 	alias(libs.plugins.kotlin.android)
 	id("com.google.devtools.ksp") version "1.9.0-1.0.13"
+	id("com.google.gms.google-services")
 }
 
 
@@ -14,7 +15,7 @@ android {
 
 	defaultConfig {
 		applicationId = "com.croftk.surfista"
-		minSdk = 24
+		minSdk = 26
 		targetSdk = 34
 		versionCode = 1
 		versionName = "1.0"
@@ -99,6 +100,16 @@ dependencies {
 
 	// OSMDroid
 	implementation ("org.osmdroid:osmdroid-android:6.1.20")
+
+	//Compose Charts
+	implementation ("io.github.ehsannarmani:compose-charts:0.0.14")
+
+	// Import the BoM for the Firebase platform
+	implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+
+	// Add the dependency for the Firebase Authentication library
+	// When using the BoM, you don't specify versions in Firebase library dependencies
+	implementation("com.google.firebase:firebase-auth")
 
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)

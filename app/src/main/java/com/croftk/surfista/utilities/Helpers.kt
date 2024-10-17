@@ -12,6 +12,13 @@ import com.croftk.surfista.utilities.dataDefinitions.Wavedata
 import com.croftk.surfista.utilities.dataDefinitions.Winddata
 
 object Helpers {
+	fun getAverage(list: String): Float{
+		var total = 0.0f
+		list.split(",").forEach { it ->
+			total += it.toFloat()
+		}
+		return total / list.split(",").size
+	}
 	fun cleanGeoAddress(name: String): String{
 		val split = name.split(",")
 		var cleanedName = ""
