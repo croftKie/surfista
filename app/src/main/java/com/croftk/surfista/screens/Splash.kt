@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,20 +59,7 @@ fun Splash(innerPadding: PaddingValues, navController: NavController, db: AppDat
 			)
 		)
 		delay(3000L)
-
-		val user = db.userDao().getAll()
-
-		if (user.isNotEmpty()){
-			val isLoggedIn = user[0].loggedIn
-			if (isLoggedIn){
-				navController.navigate(DashboardScreen.route)
-			} else {
-				navController.navigate(LoginScreen.route)
-			}
-		} else {
-			navController.navigate(LoginScreen.route)
-		}
-
+		navController.navigate(LoginScreen.route)
 	}
 
 	Column(
@@ -78,18 +67,12 @@ fun Splash(innerPadding: PaddingValues, navController: NavController, db: AppDat
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.SpaceEvenly
 	) {
-		Box(
-			modifier = Modifier
-				.clip(shape = RoundedCornerShape(12.dp))
-				.background(colorResource(R.color.blue))
-				.padding(24.dp)
-		) {
-			Image(
-				modifier = Modifier.height(120.dp),
-				painter = painterResource(R.drawable.surfboard),
-				contentDescription = ""
-			)
-		}
+		Image(
+			modifier = Modifier.fillMaxSize(),
+			contentScale = ContentScale.Crop,
+			painter = painterResource(R.drawable.beach),
+			contentDescription = ""
+		)
 	}
 }
 

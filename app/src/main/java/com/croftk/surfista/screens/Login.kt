@@ -58,20 +58,21 @@ fun Login(
 	val email = remember { mutableStateOf("") }
 	val pass = remember { mutableStateOf("") }
 	val confirm = remember { mutableStateOf("") }
-	val isUser = remember { mutableStateOf<Boolean?>(null) }
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
 			.fillMaxHeight()
-			.background(colorResource(R.color.offWhite)),
+			.background(colorResource(R.color.grenTurq)),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.SpaceEvenly
 	) {
-		Box(
+		Column(
 			modifier = Modifier
 				.clip(shape = RoundedCornerShape(12.dp))
-				.background(colorResource(R.color.blue))
-				.padding(24.dp)
+				.fillMaxHeight(0.3f)
+				.padding(24.dp),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.Center
 		) {
 			Image(
 				modifier = Modifier.height(120.dp),
@@ -79,45 +80,53 @@ fun Login(
 				contentDescription = ""
 			)
 		}
-		Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-			InputField(
-				placeholderText = "Email",
-				value = email,
-				keyboardType = KeyboardType.Email
-			)
-			InputField(
-				placeholderText = "Password",
-				value = pass,
-				keyboardType = KeyboardType.Password,
-				visualTransformation = PasswordVisualTransformation()
-			)
-			if(isSignUp.value){
+		Column(
+			modifier = Modifier.fillMaxWidth().fillMaxHeight()
+				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+				.background(colorResource(R.color.offWhite)),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.SpaceAround
+		) {
+			Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 				InputField(
-					placeholderText = "Confirm Password",
-					value = confirm,
+					placeholderText = "Email",
+					value = email,
+					keyboardType = KeyboardType.Email
+				)
+				InputField(
+					placeholderText = "Password",
+					value = pass,
 					keyboardType = KeyboardType.Password,
 					visualTransformation = PasswordVisualTransformation()
 				)
+				if(isSignUp.value){
+					InputField(
+						placeholderText = "Confirm Password",
+						value = confirm,
+						keyboardType = KeyboardType.Password,
+						visualTransformation = PasswordVisualTransformation()
+					)
+				}
 			}
-		}
-		TabButton(
-			modifier = Modifier,
-			text = if(isSignUp.value) "Sign Up" else "Sign In",
-			iconActive = false,
-			active = true
-		) {
+			TabButton(
+				modifier = Modifier,
+				text = if(isSignUp.value) "Sign Up" else "Sign In",
+				iconActive = false,
+				active = true
+			) {
 
-			// SIGN UP LOGIC
-			if(isSignUp.value && auth.currentUser == null){
-				createAccount(email.value, pass.value, navController)
-			}
+				// SIGN UP LOGIC
+				if(isSignUp.value && auth.currentUser == null){
+					createAccount(email.value, pass.value, navController)
+				}
 
-			//SIGN IN LOGIC
-			if(!isSignUp.value && auth.currentUser == null){
-				signInWithEmailAndPassword(email.value, pass.value, navController)
+				//SIGN IN LOGIC
+				if(!isSignUp.value && auth.currentUser == null){
+					signInWithEmailAndPassword(email.value, pass.value, navController)
+				}
 			}
+			Text("Switch Mode", modifier = Modifier.clickable { isSignUp.value = !isSignUp.value })
 		}
-		Text("Switch Mode", modifier = Modifier.clickable { isSignUp.value = !isSignUp.value })
 	}
 }
 

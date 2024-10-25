@@ -7,11 +7,16 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF2D2E30</color>
     <color name="white">#FFFFFF</color>
-    <color name="offWhite">#F2F2F2</color>
     <color name="blue">#BEE1ED</color>
     <color name="blueAlt">#FF00B4D8</color>
     <color name="sand">#EBC37D</color>
     <color name="orange">#FFEBBE6B</color>
     <color name="red">#FFE16059</color>
     <color name="green">#FF86E36D</color>
+<!--  New Palette  -->
+    <color name="darkTurq">#5D737E</color>
+    <color name="grenTurq">#64B6AC</color>
+    <color name="midTurq">#C0FDFB</color>
+    <color name="lightTurq">#DAFFEF</color>
+    <color name="offWhite">#FCFFFD</color>
 </resources>

@@ -36,6 +36,8 @@ import com.croftk.surfista.components.TitleBar
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.User
 import com.croftk.surfista.utilities.LoginScreen
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 
 @Composable
@@ -59,10 +61,9 @@ fun ListItem(
 }
 
 @Composable
-fun Profile(db: AppDatabase, navController: NavController){
-	val user = db.userDao().getAll()[0]
+fun Profile(db: AppDatabase, navController: NavController, user: FirebaseUser?, auth: FirebaseAuth){
 	Column(
-		modifier = Modifier.fillMaxHeight(0.3f),
+		modifier = Modifier.fillMaxHeight(0.3f).padding(top = 16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp),
 		horizontalAlignment = Alignment.CenterHorizontally,
 	) {
@@ -75,37 +76,40 @@ fun Profile(db: AppDatabase, navController: NavController){
 			painter = painterResource(R.drawable.wave),
 			contentDescription = ""
 		)
-		Text(user.email)
-		TabButton(text = "Logout", iconActive = false) {
-			db.userDao().updateUser(
-				User(
-					uid = user.uid,
-					email = user.email,
-					password = user.password,
-					loggedIn = false
-				)
-			)
-			navController.navigate(LoginScreen.route)
+		user?.email?.let { Text(it) }
+		Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+			TabButton(text = "Profile", iconActive = false) {
+				auth.signOut()
+				navController.navigate(LoginScreen.route)
+			}
+			TabButton(text = "Logout", iconActive = false) {
+				auth.signOut()
+				navController.navigate(LoginScreen.route)
+			}
 		}
 	}
 }
 
 @Composable
-fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
+fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppDatabase, user: FirebaseUser?, auth: FirebaseAuth){
 	Column(
 		modifier = Modifier
-			.background(colorResource(R.color.offWhite))
+			.background(colorResource(R.color.grenTurq))
 			.padding(innerPadding)
 			.fillMaxWidth()
 			.fillMaxHeight(),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		Profile(db, navController)
+		Profile(db, navController, user, auth)
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.padding(18.dp),
-			verticalArrangement = Arrangement.spacedBy(48.dp)
+				.fillMaxWidth()
+				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+				.background(colorResource(R.color.offWhite))
+				.padding(top = 16.dp),
+			verticalArrangement = Arrangement.spacedBy(48.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Column(
 				modifier = Modifier
@@ -120,7 +124,7 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.mail
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
+				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
 				ListItem(
 					Modifier,
 					"Change Password",
@@ -128,7 +132,7 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.padlock
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
+				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
 				ListItem(
 					Modifier,
 					"Toggle Notifications",
@@ -150,7 +154,7 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.googledocs
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.8f))
+				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
 				ListItem(
 					Modifier,
 					"Delete Account",

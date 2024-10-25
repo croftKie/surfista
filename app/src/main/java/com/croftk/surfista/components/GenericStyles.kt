@@ -14,7 +14,7 @@ import com.croftk.surfista.R
 @Composable
 fun SearchResultModifier():Modifier {
 	return Modifier.clip(RoundedCornerShape(12.dp))
-		.background(colorResource(R.color.white))
+		.background(colorResource(R.color.grenTurq))
 		.width(350.dp)
 		.padding(12.dp)
 }

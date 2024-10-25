@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -22,6 +24,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,14 +46,20 @@ import androidx.compose.ui.unit.sp
 import com.croftk.surfista.R
 
 @Composable
-fun ClickableIcon(modifier: Modifier = Modifier, drawableImage: Int, contentDesc: Int, click: ()-> Unit){
-	Icon(
-		modifier = modifier.clickable {
-			click()
-		},
-		painter = painterResource(drawableImage),
-		contentDescription = stringResource(id = contentDesc)
-	)
+fun ClickableIcon(
+	modifier: Modifier = Modifier, drawableImage: Int, contentDesc: Int, click: ()-> Unit, lineActive: Boolean = false){
+	Column {
+		Icon(
+			modifier = modifier.clickable {
+				click()
+			}.padding(bottom = 5.dp),
+			painter = painterResource(drawableImage),
+			contentDescription = stringResource(id = contentDesc)
+		)
+		if(lineActive){
+			HorizontalDivider(modifier = Modifier.height(3.dp).width(30.dp).background(colorResource(R.color.darkTurq)))
+		}
+	}
 }
 @Composable
 fun ImageIcon(modifier: Modifier = Modifier, drawableImage: Int, contentDesc: Int){
@@ -74,13 +83,11 @@ fun TabButton(
 	onClick: () -> Unit
 ){
 
-	val bgColor = if (active) R.color.sand else R.color.white
+	val bgColor = if (active) R.color.darkTurq else R.color.offWhite
 
 	Column(
 		modifier = modifier
 			.widthIn(60.dp, 120.dp)
-			.clip(shape = RoundedCornerShape(12.dp))
-			.background(colorResource(bgColor))
 			.clickable(enabled = true, onClick = onClick),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
@@ -102,6 +109,7 @@ fun TabButton(
 			}
 			Text(text = text, fontSize = fontSize)
 		}
+		HorizontalDivider(modifier.height(3.dp).width(width + 10.dp).background(colorResource(bgColor)))
 	}
 }
 
@@ -111,6 +119,8 @@ fun NavigationBar(
 	centerOptionOnClick: ()->Unit = {},
 	rightOptionOnClick: ()->Unit = {}
 ){
+	val activeOption = remember { mutableIntStateOf(0) }
+
 	Row(
 		modifier = Modifier.fillMaxWidth(),
 		verticalAlignment = Alignment.CenterVertically,
@@ -118,27 +128,39 @@ fun NavigationBar(
 		) {
 		ClickableIcon(
 			Modifier
-				.height(30.dp)
-				.width(30.dp),
+				.height(40.dp)
+				.width(40.dp),
 			R.drawable.surfboard,
 			R.string.search_mag_desc,
-			leftOptionOnClick
+			click = {
+				activeOption.value = 0
+				leftOptionOnClick()
+			},
+			lineActive = activeOption.value == 0
 		)
 		ClickableIcon(
 			Modifier
-				.height(30.dp)
-				.width(30.dp),
+				.height(40.dp)
+				.width(40.dp),
 			R.drawable.wave,
 			R.string.search_mag_desc,
-			centerOptionOnClick
+			click = {
+				activeOption.value = 1
+				centerOptionOnClick()
+			},
+			lineActive = activeOption.value == 1
 		)
 		ClickableIcon(
 			Modifier
-				.height(30.dp)
-				.width(30.dp),
+				.height(40.dp)
+				.width(40.dp),
 			R.drawable.setting,
 			R.string.search_mag_desc,
-			rightOptionOnClick
+			click = {
+				activeOption.value = 2
+				rightOptionOnClick()
+			},
+			lineActive = activeOption.value == 2
 		)
 	}
 }
@@ -186,9 +208,9 @@ fun InputField(
 	radius: Dp = 12.dp,
 	placeholderText: String = "Search Surf Spot",
 	value: MutableState<String> = mutableStateOf(""),
-	containerColor: Color = Color.White,
-	focusedIndicatorColor: Color = Color.White,
-	unfocusedIndicatorColor: Color = Color.White,
+	containerColor: Color = colorResource(R.color.offWhite),
+	focusedIndicatorColor: Color = colorResource(R.color.darkTurq),
+	unfocusedIndicatorColor: Color = colorResource(R.color.offWhite),
 	keyboardType: KeyboardType = KeyboardType.Text,
 	visualTransformation: VisualTransformation = VisualTransformation.None
 ){
@@ -217,6 +239,7 @@ fun SearchBar(
 	onClick: (text: MutableState<String>) -> Unit = {},
 	value: MutableState<String> = mutableStateOf(""),
 	buttonActive: Boolean = true,
+	searchBarActive: Boolean = true
 ) {
 
 	Row(
@@ -227,22 +250,24 @@ fun SearchBar(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	){
-		InputField(value = value, width = if(buttonActive) 0.8f else 1.0f)
+		if(searchBarActive){
+			InputField(value = value, width = if(buttonActive) 0.8f else 1.0f)
+		}
 		if(buttonActive){
 			Column(
 				modifier = Modifier
-					.fillMaxWidth()
 					.fillMaxHeight()
-					.clip(shape = RoundedCornerShape(12.dp))
-					.background(colorResource(R.color.blue)),
+					.width(55.dp)
+					.clip(shape = CircleShape)
+					.background(colorResource(R.color.offWhite)),
 				horizontalAlignment = Alignment.CenterHorizontally,
 				verticalArrangement = Arrangement.Center
 			){
 				ClickableIcon(
 					Modifier
 						.fillMaxWidth()
-						.height(20.dp)
-						.width(20.dp),
+						.height(25.dp)
+						.width(25.dp),
 					R.drawable.mag,
 					R.string.search_mag_desc,
 					click = {

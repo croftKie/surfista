@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,7 +43,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -50,6 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
@@ -87,6 +91,7 @@ import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DrawStyle
 import ir.ehsannarmani.compose_charts.models.Line
+import kotlinx.coroutines.CoroutineScope
 //import com.jaikeerthick.composable_graphs.composables.line.LineGraph
 //import com.jaikeerthick.composable_graphs.composables.line.model.LineData
 //import com.jaikeerthick.composable_graphs.composables.line.style.LineGraphColors
@@ -99,13 +104,10 @@ import kotlin.math.roundToInt
 
 @Composable
 fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
-	val scrollState = rememberScrollState()
 	var isActive = remember { mutableStateOf(0) }
 	val selectedDay = remember { mutableIntStateOf(0) }
 	val openDialog = remember { mutableStateOf(false) }
 	val dialogData = remember { mutableStateOf<List<String>>(listOf()) }
-	val scope = rememberCoroutineScope()
-	//db.MarineDao().deleteAll()
 
 	val waveData = db.MarineDao().getMarine()
 	val tempData = db.TempDao().getTempData()
@@ -115,49 +117,61 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 	Column(modifier = Modifier
 		.fillMaxWidth()
 		.fillMaxHeight()
-		.background(colorResource(R.color.offWhite))
+		.background(colorResource(R.color.grenTurq))
 		.padding(innerPadding)
-		.verticalScroll(scrollState)
 	) {
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
-				.fillMaxHeight(),
+				.fillMaxHeight(0.4f),
 		){
-			SearchBar(
-				adjustablePadding = 10.dp,
-				onClick = { value ->
-					scope.launch {
-						val result = GeoServices.fetchGeoData(
-							location = value.value,
-							key = BuildConfig.GEO_KEY
+			Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+				Column(
+					modifier = Modifier
+						.padding(start = 12.dp, top = 12.dp)
+						.fillMaxWidth(0.75f)
+				) {
+					Text(
+						color = colorResource(R.color.offWhite),
+						text = "Day By Day Report",
+						fontSize = 30.sp,
+					)
+					if(waveData.isNotEmpty()){
+						Text(
+							color = colorResource(R.color.offWhite),
+							text = "7 Day surf forecast for Santander, ES",
+							fontSize = 15.sp,
 						)
-						db.GeolocationDao().deleteAll()
-						result?.forEach { item ->
-							db.GeolocationDao().insertLocation(GeoLocation(
-								placeId = item.place_id,
-								name = Helpers.cleanGeoAddress(item.display_name),
-								lat = item.lat,
-								lon = item.lon,
-								importance = item.importance.toFloat()
-							))
-						}
-						navController.navigate(SearchScreen.route)
+					} else {
+						Text(
+							color = colorResource(R.color.offWhite),
+							text = "7 Day surf forecast",
+							fontSize = 15.sp,
+						)
 					}
-				})
+				}
+				SearchBar(
+					searchBarActive = false,
+					adjustablePadding = 10.dp,
+					onClick = {
+						navController.navigate(SearchScreen.route)
+					})
+			}
 			if(waveData.isNotEmpty()){
-				DayCardRow(adjustablePadding = 20.dp, waveData, tempData, windData, selectedDay)
+				DayCardRow(adjustablePadding = 20.dp, waveData, tempData, windData, selectedDay, navController)
 			} else {
 				Empty()
 			}
 		}
 		Column(modifier = Modifier
 			.fillMaxWidth()
-			.fillMaxHeight(),
+			.fillMaxHeight()
+			.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+			.background(colorResource(R.color.offWhite)),
 		) {
 			Row(
 				modifier = Modifier
-					.padding(5.dp)
+					.padding(top = 20.dp)
 					.fillMaxWidth(),
 				horizontalArrangement = Arrangement.SpaceEvenly
 			) {
@@ -289,7 +303,6 @@ fun DayCard(item: Marine, tempItem: Temperature, windItem: Wind, position: Int, 
 	var avgwave = Helpers.getAverage(item.wave_height)
 	var avgWaveDirec = Helpers.getAverage(item.wave_direction)
 	var avgWindDirec = Helpers.getAverage(windItem.wind_direction)
-	println(avgwave)
 
 
 
@@ -303,7 +316,8 @@ fun DayCard(item: Marine, tempItem: Temperature, windItem: Wind, position: Int, 
 
 	val isActive = position == selectedDay.intValue
 	Card(modifier = Modifier
-		.width(200.dp)
+		.height(if(isActive) 200.dp else 170.dp)
+		.width(if(isActive) 200.dp else 170.dp)
 		.padding(end = 6.dp)
 		.clickable {
 			selectedDay.intValue = position
@@ -311,9 +325,10 @@ fun DayCard(item: Marine, tempItem: Temperature, windItem: Wind, position: Int, 
 	) {
 		Column(
 			modifier = Modifier
-				.background(if(isActive) colorResource(R.color.sand) else Color.White)
+				.fillMaxHeight()
+				.background(colorResource(R.color.offWhite))
 				.padding(12.dp),
-			verticalArrangement = Arrangement.spacedBy(12.dp)
+			verticalArrangement = Arrangement.SpaceBetween
 		) {
 			Row(
 				modifier = Modifier.fillMaxWidth(),
@@ -383,7 +398,8 @@ fun DayCardRow(
 	data: List<Marine>,
 	tempData: List<Temperature>,
 	windData: List<Wind>,
-	selectedDay: MutableIntState
+	selectedDay: MutableIntState,
+	navController: NavHostController,
 ){
 	val scrollState = rememberScrollState()
 
@@ -391,24 +407,15 @@ fun DayCardRow(
 	Column(
 		modifier = Modifier
 			.padding(12.dp)
-			.clip(shape = RoundedCornerShape(12.dp))
-			.background(colorResource(R.color.blue)),
+			.clip(shape = RoundedCornerShape(12.dp)),
 		verticalArrangement = Arrangement.spacedBy(18.dp)
 	) {
-		Column(
-			modifier = Modifier
-				.padding(start = 12.dp, top = 12.dp)
-		) {
-			Text(
-				"Day By Day Report",
-				fontSize = 30.sp,
-			)
-			Text("7 Day surf forecast for Santander, ES")
-		}
 		Row(modifier = Modifier
 			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
 			.horizontalScroll(scrollState),
-			horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.spacedBy(12.dp))
+		{
 			data.forEachIndexed{index, item ->
 				DayCard(item, tempData[index], windData[index], index, selectedDay)
 			}
@@ -432,11 +439,11 @@ fun Table(
 	dialogData: MutableState<List<String>>
 ){
 	val scrollState = rememberScrollState()
-
+	val vScrollState = rememberScrollState()
 	Row(modifier = modifier
-		.padding(top = 18.dp, start = 18.dp, end = 18.dp)
+		.padding(top = 18.dp, start = 18.dp, end = 18.dp, bottom = 18.dp)
 		.horizontalScroll(scrollState)
-
+		.verticalScroll(vScrollState)
 	) {
 		timeData.forEachIndexed {index, _ ->
 			Column {
@@ -445,7 +452,7 @@ fun Table(
 						modifier = Modifier
 							.padding(6.dp)
 							.clip(shape = RoundedCornerShape(12.dp))
-							.background(Color.White)
+							.background(colorResource(R.color.grenTurq))
 							.height(rowHeight)
 							.width(columnHeight)
 							.clickable {
@@ -470,16 +477,16 @@ fun Table(
 
 							}
 						} else if (j == 1){
-							Text(timeData[index].substring(12))
+							Text(color = colorResource(R.color.offWhite), text = timeData[index].substring(12))
 						} else {
 							val v1 = if (rowOneValues[index] !== "null") { "${rowOneValues[index]}${valueTypes[0]}" } else { "N/A" }
 							val v2 = if (rowTwoValues[index] !== "null") { "${rowTwoValues[index]}${valueTypes[1]}" } else { "N/A" }
 							val v3 = if (rowThreeValues[index] !== "null") { "${rowThreeValues[index].toFloat() / 1000}${valueTypes[2]}" } else { "N/A" }
 
 							when(j){
-								2 -> Text(v1)
-								3 -> Text(v2)
-								4 -> Text(v3)
+								2 -> Text(color = colorResource(R.color.offWhite), text = v1)
+								3 -> Text(color = colorResource(R.color.offWhite), text = v2)
+								4 -> Text(color = colorResource(R.color.offWhite), text = v3)
 							}
 						}
 					}
@@ -488,5 +495,3 @@ fun Table(
 		}
 	}
 }
-
-

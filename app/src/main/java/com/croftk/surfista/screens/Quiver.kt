@@ -21,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,38 +48,26 @@ import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.Board
 
 @Composable
-fun BoardCardRow(adjustablePadding: Dp, quiver: List<Board>){
+fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 	val scrollState = rememberScrollState()
 
 	Column(
 		modifier = Modifier
 			.padding(12.dp)
-			.clip(shape = RoundedCornerShape(12.dp))
-			.background(colorResource(R.color.blue)),
+			.clip(shape = RoundedCornerShape(12.dp)),
 		verticalArrangement = Arrangement.spacedBy(18.dp)
 	) {
-		Column(
-			modifier = Modifier
-				.padding(start = 12.dp, top = 12.dp).fillMaxWidth(),
-			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			Text(
-				"My Boards",
-				fontSize = 30.sp,
-			)
-			Text("Your current quiver of surfboards")
-		}
 		Row(modifier = Modifier
 			.padding(bottom = adjustablePadding, start = adjustablePadding / 2).fillMaxWidth()
 			.horizontalScroll(scrollState),
-			horizontalArrangement = if(quiver.isNotEmpty()) Arrangement.spacedBy(12.dp) else Arrangement.Center
+			horizontalArrangement = if(quiver.value.isNotEmpty()) Arrangement.spacedBy(12.dp) else Arrangement.Center
 		) {
-			if (quiver.isNotEmpty()){
-				quiver.forEach{board->
+			if (quiver.value.isNotEmpty()){
+				quiver.value.forEach{board->
 					BoardCard(board)
 				}
 			} else {
-				Empty()
+				Empty(text = "No surfboards added")
 			}
 		}
 	}
@@ -90,45 +79,12 @@ fun BoardCard(board: Board){
 		.clip(shape = RoundedCornerShape(12.dp))
 		.background(colorResource(R.color.white))
 		.height(150.dp)
-		.width(300.dp)
+		.width(200.dp)
 		.padding(6.dp)
 	) {
-		Row(
-			modifier = Modifier.fillMaxWidth().padding(6.dp),
-			horizontalArrangement = Arrangement.SpaceBetween,
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Image(
-				modifier = Modifier.fillMaxHeight().fillMaxWidth(0.3f),
-				painter = painterResource(R.drawable.surfboard),
-				contentDescription = "",
-			)
-			Column(
-				modifier = Modifier.fillMaxWidth().fillMaxHeight(),
-				horizontalAlignment = Alignment.End,
-				verticalArrangement = Arrangement.SpaceBetween) {
-				Text(text = board.type, fontSize = 25.sp)
-				Text(text = board.size, fontSize = 25.sp)
-				Row(
-					modifier = Modifier.padding(6.dp),
-					horizontalArrangement = Arrangement.spacedBy(32.dp)
-				) {
-					ClickableIcon(
-						modifier = Modifier.height(25.dp),
-						drawableImage = R.drawable.edit,
-						contentDesc = R.string.search_mag_desc,
-						click = {}
-					)
-					ClickableIcon(
-						modifier = Modifier.height(25.dp),
-						drawableImage = R.drawable.trash,
-						contentDesc = R.string.search_mag_desc,
-						click = {}
-					)
-				}
-			}
-		}
-
+		Text(text = board.name, fontSize = 25.sp)
+		Text(text = board.type, fontSize = 25.sp)
+		Text(text = board.size, fontSize = 25.sp)
 	}
 }
 
@@ -152,35 +108,37 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 	)
 	val searchInput = remember { mutableStateOf("") }
 
-	val myQuiver = db.BoardDao().getAll()
+	val myQuiver = remember { mutableStateOf(db.BoardDao().getAll()) }
 
 
 	Column(
-		modifier = Modifier.fillMaxHeight().padding(innerPadding).fillMaxWidth().background(colorResource(R.color.offWhite)),
+		modifier = Modifier.fillMaxHeight().fillMaxWidth().background(colorResource(R.color.grenTurq)).padding(innerPadding),
 		horizontalAlignment = Alignment.CenterHorizontally
 	){
 		BoardCardRow(12.dp, myQuiver)
-		SearchBar(
-			12.dp,
-			value = searchInput,
-			buttonActive = false,
-			onClick = {
-				updatedText ->
-				searchInput.value = updatedText.value
-			}
-		)
+
 		Column(
 			modifier = Modifier
-				.padding(12.dp)
 				.verticalScroll(vertScrollState)
-				.fillMaxWidth(),
+				.fillMaxWidth()
+				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+				.background(colorResource(R.color.offWhite))
+				.padding(12.dp),
 			verticalArrangement = Arrangement.spacedBy(12.dp),
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
+			SearchBar(
+				12.dp,
+				value = searchInput,
+				buttonActive = false,
+				onClick = {
+						updatedText ->
+					searchInput.value = updatedText.value
+				}
+			)
 			boards.forEachIndexed{index, boardType ->
 				boardType.entries.forEach{ entry ->
 					entry.value.forEach { value ->
-						println(searchInput.value)
 						if (
 							entry.key.lowercase().contains(searchInput.value.lowercase()) ||
 							value.lowercase().contains(searchInput.value.lowercase())
@@ -211,8 +169,8 @@ fun SearchResult(boardType: String, value: String, db: AppDatabase){
 				modifier = Modifier.fillMaxWidth(),
 				verticalArrangement = Arrangement.spacedBy(12.dp)
 			) {
-				Text(boardType, fontSize = 20.sp)
-				Text("${value}ft", fontSize = 20.sp)
+				Text(color = colorResource(R.color.offWhite), text = boardType, fontSize = 20.sp)
+				Text(color = colorResource(R.color.offWhite), text = "${value}ft", fontSize = 20.sp)
 			}
 		}
 		ClickableIcon(

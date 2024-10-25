@@ -44,11 +44,10 @@ import com.croftk.surfista.utilities.QuiverScreen
 import com.croftk.surfista.utilities.SearchScreen
 import com.croftk.surfista.utilities.SettingsScreen
 import com.croftk.surfista.utilities.SplashScreen
+import com.croftk.surfista.utilities.animations.Enter
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
-import kotlin.reflect.KFunction2
 
 class MainActivity : ComponentActivity() {
 	private lateinit var auth: FirebaseAuth
@@ -128,63 +127,44 @@ fun Navigation(
 	signInWithEmailAndPassword: (String, String, NavController)->Unit
 	){
 	val currentUser = auth.currentUser
-	println(currentUser)
 	val navController = rememberNavController()
-	val topBarState = rememberSaveable { (mutableStateOf(true)) }
 	val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
+	val actionButtonState = rememberSaveable { (mutableStateOf(false)) }
 	val navBackStackEntry by navController.currentBackStackEntryAsState()
 
 	when (navBackStackEntry?.destination?.route){
 		LoginScreen.route -> {
-			topBarState.value = false
+			actionButtonState.value = false
 			bottomBarState.value = false
 		}
 		SplashScreen.route -> {
-			topBarState.value = false
+			actionButtonState.value = false
 			bottomBarState.value = false
 		}
 		DashboardScreen.route -> {
-			topBarState.value = false
+			actionButtonState.value = false
 			bottomBarState.value = true
 		}
+		SearchScreen.route -> {
+			actionButtonState.value = true
+		}
 		else -> {
-			topBarState.value = true
+			actionButtonState.value = false
 			bottomBarState.value = true
 		}
 	}
 
 	Scaffold(
-		topBar = {
-			if (topBarState.value){
-				TopAppBar(
-					modifier = Modifier.height(80.dp),
-					title = {},
-					navigationIcon = {
-						ClickableIcon(
-							Modifier
-								.height(30.dp)
-								.padding(start = 6.dp, bottom = 6.dp),
-							R.drawable.arrow,
-							R.string.search_mag_desc
-						){
-							navController.popBackStack()
-						}
-					},
-					colors = TopAppBarColors(
-						containerColor = colorResource(R.color.offWhite),
-						titleContentColor = Color.Black,
-						actionIconContentColor = Color.Black,
-						navigationIconContentColor = Color.Black,
-						scrolledContainerColor = Color.Black
-					)
-				)
+		floatingActionButton = {
+			if(actionButtonState.value){
+				ClickableIcon(Modifier.height(60.dp), R.drawable.sun, R.string.search_mag_desc, click = {})
 			}
 		},
 		bottomBar = {
 			if(bottomBarState.value){
 				BottomAppBar(
-					modifier = Modifier.height(100.dp).padding(bottom = 12.dp),
-					containerColor = colorResource(R.color.offWhite)
+					modifier = Modifier.height(80.dp),
+					containerColor = colorResource(R.color.offWhite),
 				) {
 					NavigationBar(
 						leftOptionOnClick = {
@@ -206,28 +186,40 @@ fun Navigation(
 			startDestination = if(currentUser != null) DashboardScreen.route else SplashScreen.route
 		){
 			composable(DashboardScreen.route) {
-				Dashboard(innerPadding, navController, db)
+				Enter {
+					Dashboard(innerPadding, navController, db)
+				}
 			}
 			composable(SettingsScreen.route) {
-				Settings(innerPadding, navController, db)
+				Enter {
+					Settings(innerPadding, navController, db, currentUser, auth)
+				}
 			}
 			composable(QuiverScreen.route) {
-				Quiver(innerPadding, navController, db)
+				Enter {
+					Quiver(innerPadding, navController, db)
+				}
 			}
 			composable(LoginScreen.route) {
-				Login(
-					innerPadding,
-					navController,
-					db,
-					auth,
-					createAccount,
-					signInWithEmailAndPassword)
+				Enter {
+					Login(
+						innerPadding,
+						navController,
+						db,
+						auth,
+						createAccount,
+						signInWithEmailAndPassword)
+				}
 			}
 			composable(SearchScreen.route) {
-				Search(innerPadding, navController, db)
+				Enter{
+					Search(innerPadding, navController, db)
+				}
 			}
 			composable(SplashScreen.route) {
-				Splash(innerPadding, navController, db)
+				Enter {
+					Splash(innerPadding, navController, db)
+				}
 			}
 		}
 	}

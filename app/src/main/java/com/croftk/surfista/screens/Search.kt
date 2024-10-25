@@ -55,6 +55,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.croftk.surfista.BuildConfig
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
@@ -65,6 +66,8 @@ import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.utilities.DashboardScreen
 import com.croftk.surfista.utilities.Helpers
+import com.croftk.surfista.utilities.SearchScreen
+import com.croftk.surfista.utilities.httpServices.GeoServices
 import com.croftk.surfista.utilities.httpServices.WaveServices
 import kotlinx.coroutines.Delay
 import kotlinx.coroutines.delay
@@ -77,18 +80,33 @@ import org.osmdroid.views.MapView
 
 @Composable
 fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDatabase) {
-
+	val scope = rememberCoroutineScope()
 	val geoData = db.GeolocationDao().getAllSorted()
 	val selectedLocation = remember { mutableIntStateOf(-1) }
 	val openDialog = remember { mutableStateOf(true) }
 	Column(
 		modifier = Modifier
 			.fillMaxHeight()
+			.background(colorResource(R.color.grenTurq))
 			.padding(innerPadding)
-			.background(colorResource(R.color.offWhite))
 	) {
 		SearchBar(onClick = { value ->
-			println(value.value)
+			scope.launch {
+				val result = GeoServices.fetchGeoData(
+					location = value.value
+				)
+				db.GeolocationDao().deleteAll()
+				result?.forEach { item ->
+					db.GeolocationDao().insertLocation(GeoLocation(
+						placeId = item.place_id,
+						name = Helpers.cleanGeoAddress(item.display_name),
+						lat = item.lat,
+						lon = item.lon,
+						importance = item.importance.toFloat()
+					))
+				}
+				navController.navigate(SearchScreen.route)
+			}
 		})
 		SearchResults(geoData, selectedLocation, openDialog, db, navController)
 	}
@@ -106,8 +124,11 @@ fun SearchResults(
 	Column(
 		Modifier
 			.fillMaxWidth()
-			.padding(vertical = 12.dp)
-			.verticalScroll(scrollState),
+			.fillMaxHeight()
+			.padding(top = 12.dp)
+			.verticalScroll(scrollState)
+			.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+			.background(colorResource(R.color.offWhite)),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.spacedBy(24.dp)
 	) {
@@ -131,27 +152,28 @@ fun SearchResult(
 		modifier = SearchResultModifier()
 			.clickable {
 				scope.launch {
-					db.MarineDao().deleteAll()
-					db.TempDao().deleteAll()
-					db.WindDao().deleteAll()
-
 					val waveResult = WaveServices.fetchWaveData(item.lat, item.lon)
-					if(waveResult != null){
-						Helpers.storeFetchedData(waveResult, item, db.MarineDao())
-					}
-
 					val tempResult = WaveServices.fetchTempData(item.lat, item.lon)
-
-					if(tempResult != null){
-						Helpers.storeFetchedData(tempResult, item, db.TempDao())
-					}
-
 					val windResult = WaveServices.fetchWindData(item.lat, item.lon)
-					if(windResult != null){
-						Helpers.storeFetchedData(windResult, item, db.WindDao())
-					}
 
-					navController.navigate(DashboardScreen.route)
+					if (waveResult?.hourly?.wave_height?.get(0) == null){
+						println("No Wave Data Available")
+					} else {
+						db.MarineDao().deleteAll()
+						db.TempDao().deleteAll()
+						db.WindDao().deleteAll()
+
+						if(waveResult != null){
+							Helpers.storeFetchedData(waveResult, item, db.MarineDao())
+						}
+						if(tempResult != null){
+							Helpers.storeFetchedData(tempResult, item, db.TempDao())
+						}
+						if(windResult != null){
+							Helpers.storeFetchedData(windResult, item, db.WindDao())
+						}
+						navController.navigate(DashboardScreen.route)
+					}
 				}
 			}
 	) {
