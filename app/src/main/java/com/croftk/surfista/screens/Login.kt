@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.InputField
+import com.croftk.surfista.components.SolidButton
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.User
@@ -55,9 +58,9 @@ fun Login(
 	signInWithEmailAndPassword: (String, String, NavController)->Unit
 ){
 	val isSignUp = remember { mutableStateOf(false) }
-	val email = remember { mutableStateOf("") }
-	val pass = remember { mutableStateOf("") }
-	val confirm = remember { mutableStateOf("") }
+	val email = remember { mutableStateOf<String>("") }
+	val pass = remember { mutableStateOf<String>("") }
+	val confirm = remember { mutableStateOf<String>("") }
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -70,62 +73,67 @@ fun Login(
 			modifier = Modifier
 				.clip(shape = RoundedCornerShape(12.dp))
 				.fillMaxHeight(0.3f)
-				.padding(24.dp),
+				.padding(top = 24.dp),
 			horizontalAlignment = Alignment.CenterHorizontally,
 			verticalArrangement = Arrangement.Center
 		) {
 			Image(
-				modifier = Modifier.height(120.dp),
-				painter = painterResource(R.drawable.surfboard),
+				modifier = Modifier.fillMaxSize(),
+				painter = painterResource(R.drawable.logo),
 				contentDescription = ""
 			)
 		}
-		Column(
-			modifier = Modifier.fillMaxWidth().fillMaxHeight()
-				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-				.background(colorResource(R.color.offWhite)),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.SpaceAround
+		Surface(
+			modifier = Modifier
+				.fillMaxWidth()
+				.fillMaxHeight()
+			.clip(shape = RoundedCornerShape(topStart = 42.dp, topEnd = 42.dp))
+			.background(colorResource(R.color.offWhite)),
+			color = colorResource(R.color.offWhite)
 		) {
-			Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-				InputField(
-					placeholderText = "Email",
-					value = email,
-					keyboardType = KeyboardType.Email
-				)
-				InputField(
-					placeholderText = "Password",
-					value = pass,
-					keyboardType = KeyboardType.Password,
-					visualTransformation = PasswordVisualTransformation()
-				)
-				if(isSignUp.value){
+			Column(
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.SpaceAround
+			) {
+				Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 					InputField(
-						placeholderText = "Confirm Password",
-						value = confirm,
+						placeholderText = "Email",
+						value = email,
+						keyboardType = KeyboardType.Email
+					)
+					InputField(
+						placeholderText = "Password",
+						value = pass,
 						keyboardType = KeyboardType.Password,
 						visualTransformation = PasswordVisualTransformation()
 					)
+					if(isSignUp.value){
+						InputField(
+							placeholderText = "Confirm Password",
+							value = confirm,
+							keyboardType = KeyboardType.Password,
+							visualTransformation = PasswordVisualTransformation()
+						)
+					}
 				}
-			}
-			TabButton(
-				modifier = Modifier,
-				text = if(isSignUp.value) "Sign Up" else "Sign In",
-				iconActive = false,
-				active = true
-			) {
+				SolidButton(
+					modifier = Modifier,
+					text = if(isSignUp.value) "Sign Up" else "Sign In",
+					iconActive = false,
+				) {
 
-				// SIGN UP LOGIC
-				if(isSignUp.value && auth.currentUser == null){
-					createAccount(email.value, pass.value, navController)
-				}
+					// SIGN UP LOGIC
+					if(isSignUp.value && auth.currentUser == null){
+						createAccount(email.value, pass.value, navController)
+					}
 
-				//SIGN IN LOGIC
-				if(!isSignUp.value && auth.currentUser == null){
-					signInWithEmailAndPassword(email.value, pass.value, navController)
+					//SIGN IN LOGIC
+					if(!isSignUp.value && auth.currentUser == null){
+						signInWithEmailAndPassword(email.value, pass.value, navController)
+					}
 				}
+				Text("Switch Mode", modifier = Modifier.clickable { isSignUp.value = !isSignUp.value })
 			}
-			Text("Switch Mode", modifier = Modifier.clickable { isSignUp.value = !isSignUp.value })
 		}
 	}
 }

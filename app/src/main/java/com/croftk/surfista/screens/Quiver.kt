@@ -1,7 +1,9 @@
 package com.croftk.surfista.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.toLowerCase
@@ -39,10 +45,13 @@ import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ClickableIcon
 import com.croftk.surfista.components.Empty
+import com.croftk.surfista.components.HorizontalCard
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
+import com.croftk.surfista.components.QuiverFilterModifier
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.SearchResultModifier
+import com.croftk.surfista.components.SolidButton
 import com.croftk.surfista.components.TitleBar
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.Board
@@ -53,8 +62,7 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 
 	Column(
 		modifier = Modifier
-			.padding(12.dp)
-			.clip(shape = RoundedCornerShape(12.dp)),
+			.padding(12.dp),
 		verticalArrangement = Arrangement.spacedBy(18.dp)
 	) {
 		Row(modifier = Modifier
@@ -63,7 +71,7 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 			horizontalArrangement = if(quiver.value.isNotEmpty()) Arrangement.spacedBy(12.dp) else Arrangement.Center
 		) {
 			if (quiver.value.isNotEmpty()){
-				quiver.value.forEach{board->
+				quiver.value.forEachIndexed{i, board->
 					BoardCard(board)
 				}
 			} else {
@@ -75,16 +83,55 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 
 @Composable
 fun BoardCard(board: Board){
-	Column(modifier = Modifier
-		.clip(shape = RoundedCornerShape(12.dp))
-		.background(colorResource(R.color.white))
-		.height(150.dp)
-		.width(200.dp)
-		.padding(6.dp)
-	) {
-		Text(text = board.name, fontSize = 25.sp)
-		Text(text = board.type, fontSize = 25.sp)
-		Text(text = board.size, fontSize = 25.sp)
+	Column(Modifier.width(230.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+		Card(
+			modifier = Modifier,
+			shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+			elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+		) {
+			Row(modifier = Modifier
+				.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp),
+				horizontalArrangement = Arrangement.Start,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Text(modifier = Modifier
+					.clip(RoundedCornerShape(6.dp))
+					.padding(3.dp),
+					text = board.name,
+					fontSize = 20.sp
+				)
+			}
+		}
+		Card(
+			shape = RoundedCornerShape(bottomEnd = 12.dp, bottomStart = 12.dp),
+			elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+		) {
+			Row(modifier = Modifier.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp)) {
+				Column(
+					modifier = Modifier.fillMaxWidth(0.4f),
+					verticalArrangement = Arrangement.spacedBy(12.dp)
+				) {
+					Text(color = colorResource(R.color.darkTurq), text = "Type:", fontSize = 20.sp)
+					Text(color = colorResource(R.color.darkTurq), text = "Length:", fontSize = 20.sp)
+				}
+				Column(
+					modifier = Modifier.fillMaxWidth(),
+					verticalArrangement = Arrangement.spacedBy(12.dp)
+				) {
+					Text(color = colorResource(R.color.darkTurq), text = board.type, fontSize = 20.sp)
+					Text(color = colorResource(R.color.darkTurq), text = "${board.size}ft", fontSize = 20.sp)
+				}
+			}
+			Row(modifier = Modifier
+				.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp),
+				horizontalArrangement = Arrangement.End,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				SolidButton(text = "Edit", iconActive = false, onClick = {})
+			}
+		}
+
+
 	}
 }
 
@@ -111,39 +158,43 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 	val myQuiver = remember { mutableStateOf(db.BoardDao().getAll()) }
 
 
-	Column(
-		modifier = Modifier.fillMaxHeight().fillMaxWidth().background(colorResource(R.color.grenTurq)).padding(innerPadding),
-		horizontalAlignment = Alignment.CenterHorizontally
-	){
-		BoardCardRow(12.dp, myQuiver)
-
+	Card(elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)) {
 		Column(
-			modifier = Modifier
-				.verticalScroll(vertScrollState)
-				.fillMaxWidth()
-				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-				.background(colorResource(R.color.offWhite))
-				.padding(12.dp),
-			verticalArrangement = Arrangement.spacedBy(12.dp),
+			modifier = Modifier.fillMaxHeight().fillMaxWidth().background(colorResource(R.color.grenTurq)).padding(innerPadding),
 			horizontalAlignment = Alignment.CenterHorizontally
-		) {
-			SearchBar(
-				12.dp,
-				value = searchInput,
-				buttonActive = false,
-				onClick = {
-						updatedText ->
-					searchInput.value = updatedText.value
-				}
-			)
-			boards.forEachIndexed{index, boardType ->
-				boardType.entries.forEach{ entry ->
-					entry.value.forEach { value ->
-						if (
-							entry.key.lowercase().contains(searchInput.value.lowercase()) ||
-							value.lowercase().contains(searchInput.value.lowercase())
+		){
+			BoardCardRow(12.dp, myQuiver)
+
+			Column(
+				modifier = Modifier
+					.verticalScroll(vertScrollState)
+					.fillMaxWidth()
+					.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+					.background(colorResource(R.color.offWhite))
+					.padding(12.dp),
+				verticalArrangement = Arrangement.spacedBy(12.dp),
+				horizontalAlignment = Alignment.CenterHorizontally
+			) {
+				SearchBar(
+					12.dp,
+					value = searchInput,
+					buttonActive = false,
+					placeholder = "Filter Surfboards",
+					onClick = {
+							updatedText ->
+						searchInput.value = updatedText.value
+					}
+				)
+				boards.forEachIndexed{index, boardType ->
+					boardType.entries.forEach{ entry ->
+						entry.value.forEach { value ->
+							if (
+								entry.key.lowercase().contains(searchInput.value.lowercase()) ||
+								value.lowercase().contains(searchInput.value.lowercase())
 							){
-							SearchResult(entry.key, value, db)
+//								SearchResult(entry.key, value, db)
+								HorizontalCard()
+							}
 						}
 					}
 				}
@@ -154,38 +205,60 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 
 @Composable
 fun SearchResult(boardType: String, value: String, db: AppDatabase){
-	Row(
-		modifier = SearchResultModifier(),
-		horizontalArrangement = Arrangement.SpaceAround,
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		ImageIcon(
-			modifier = Modifier.height(40.dp),
-			drawableImage = R.drawable.surfboard,
-			contentDesc = R.string.search_mag_desc
-		)
-		Column(modifier = Modifier.fillMaxWidth(0.5f)) {
-			Column(
-				modifier = Modifier.fillMaxWidth(),
-				verticalArrangement = Arrangement.spacedBy(12.dp)
+	Row(modifier = Modifier.height(100.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+		Card(
+			modifier = Modifier,
+			shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp),
+			elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+		){
+			Row(
+				modifier = QuiverFilterModifier().fillMaxWidth(0.75f),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text(color = colorResource(R.color.offWhite), text = boardType, fontSize = 20.sp)
-				Text(color = colorResource(R.color.offWhite), text = "${value}ft", fontSize = 20.sp)
+				Row(modifier = Modifier.padding(12.dp).fillMaxWidth(0.75f),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceEvenly
+				) {
+					Column(
+						modifier = Modifier,
+						verticalArrangement = Arrangement.spacedBy(12.dp)
+					) {
+						Text(color = colorResource(R.color.darkTurq), text = "Type:", fontSize = 20.sp)
+						Text(color = colorResource(R.color.darkTurq), text = "Length:", fontSize = 20.sp)
+					}
+					Column(
+						modifier = Modifier,
+						verticalArrangement = Arrangement.spacedBy(12.dp)
+					) {
+						Text(color = colorResource(R.color.darkTurq), text = boardType, fontSize = 20.sp)
+						Text(color = colorResource(R.color.darkTurq), text = "${value}ft", fontSize = 20.sp)
+					}
+				}
 			}
 		}
-		ClickableIcon(
-			modifier = Modifier.height(30.dp),
-			drawableImage = R.drawable.add,
-			contentDesc = R.string.search_mag_desc,
-			click = {
-				db.BoardDao().insertBoard(Board(
-					id = (1..100).random(),
-					name = "My Board",
-					type = boardType,
-					size = value
-				))
+		Card(
+			shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp),
+			elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+		) {
+			Column(modifier = Modifier
+				.fillMaxHeight()
+				.fillMaxWidth()
+				.background(colorResource(R.color.grenTurq))
+				.padding(12.dp),
+				verticalArrangement = Arrangement.Center,
+				horizontalAlignment = Alignment.CenterHorizontally
+			) {
+				SolidButton(text = "Add", iconActive = false) {
+					db.BoardDao().insertBoard(Board(
+						id = (1..100).random(),
+						name = "My Board",
+						type = boardType,
+						size = value
+					))
+				}
 			}
-		)
+		}
 	}
 }
 

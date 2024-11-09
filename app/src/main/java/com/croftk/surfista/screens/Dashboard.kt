@@ -78,6 +78,7 @@ import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TabButton
+import com.croftk.surfista.components.Tutorial
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
@@ -160,7 +161,7 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 			if(waveData.isNotEmpty()){
 				DayCardRow(adjustablePadding = 20.dp, waveData, tempData, windData, selectedDay, navController)
 			} else {
-				Empty()
+				Tutorial()
 			}
 		}
 		Column(modifier = Modifier

@@ -1,12 +1,15 @@
 package com.croftk.surfista.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +18,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -73,8 +78,6 @@ fun ImageIcon(modifier: Modifier = Modifier, drawableImage: Int, contentDesc: In
 fun TabButton(
 	modifier: Modifier = Modifier,
 	text: String,
-	color: Color = Color.DarkGray,
-	height: Dp = 1.dp,
 	width: Dp = 60.dp,
 	fontSize: TextUnit = 20.sp,
 	drawable: Int = R.drawable.ic_launcher_foreground,
@@ -110,6 +113,45 @@ fun TabButton(
 			Text(text = text, fontSize = fontSize)
 		}
 		HorizontalDivider(modifier.height(3.dp).width(width + 10.dp).background(colorResource(bgColor)))
+	}
+}
+@Composable
+fun SolidButton(
+	modifier: Modifier = Modifier,
+	text: String,
+	fontSize: TextUnit = 15.sp,
+	drawable: Int = R.drawable.ic_launcher_foreground,
+	iconActive: Boolean = true,
+	onClick: () -> Unit
+){
+	Card(
+		modifier = modifier
+			.widthIn(60.dp, 120.dp)
+			.height(30.dp)
+			.clickable(enabled = true, onClick = onClick),
+		shape = RoundedCornerShape(6.dp),
+		elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+	) {
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(30.dp)
+				.background(colorResource(R.color.grenTurq))
+				.padding(3.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.SpaceEvenly
+		) {
+			if(iconActive){
+				ImageIcon(
+					modifier = Modifier
+						.height(20.dp)
+						.width(20.dp),
+					drawableImage = drawable,
+					contentDesc = R.string.search_mag_desc
+				)
+			}
+			Text(color = colorResource(R.color.offWhite), text = text, fontSize = fontSize)
+		}
 	}
 }
 
@@ -205,12 +247,12 @@ fun TitleBar(
 @Composable
 fun InputField(
 	width: Float = 0.8f,
-	radius: Dp = 12.dp,
+	radius: Dp = 0.dp,
 	placeholderText: String = "Search Surf Spot",
 	value: MutableState<String> = mutableStateOf(""),
 	containerColor: Color = colorResource(R.color.offWhite),
-	focusedIndicatorColor: Color = colorResource(R.color.darkTurq),
-	unfocusedIndicatorColor: Color = colorResource(R.color.offWhite),
+	focusedIndicatorColor: Color = colorResource(R.color.grenTurq),
+	unfocusedIndicatorColor: Color = colorResource(R.color.darkTurq),
 	keyboardType: KeyboardType = KeyboardType.Text,
 	visualTransformation: VisualTransformation = VisualTransformation.None
 ){
@@ -239,7 +281,8 @@ fun SearchBar(
 	onClick: (text: MutableState<String>) -> Unit = {},
 	value: MutableState<String> = mutableStateOf(""),
 	buttonActive: Boolean = true,
-	searchBarActive: Boolean = true
+	searchBarActive: Boolean = true,
+	placeholder: String = "Search Surf Spot"
 ) {
 
 	Row(
@@ -251,7 +294,7 @@ fun SearchBar(
 		horizontalArrangement = Arrangement.spacedBy(12.dp)
 	){
 		if(searchBarActive){
-			InputField(value = value, width = if(buttonActive) 0.8f else 1.0f)
+			InputField(placeholderText = placeholder, value = value, width = if(buttonActive) 0.8f else 1.0f)
 		}
 		if(buttonActive){
 			Column(
@@ -289,10 +332,25 @@ fun Empty(modifier: Modifier = Modifier, text: String = "No Data Selected Yet"){
 	) {
 		ImageIcon(
 			Modifier.height(90.dp).alpha(0.25f).padding(bottom = 12.dp),
-			drawableImage = R.drawable.surfboard,
+			drawableImage = R.drawable.logo,
 			contentDesc = R.string.search_mag_desc
 		)
 		Text(modifier = Modifier.alpha(0.5f), text = text, fontSize = 20.sp)
+	}
+}
+
+@Composable
+fun Tutorial(modifier: Modifier = Modifier, mode: Int = 0){
+	Column(
+		modifier = modifier.fillMaxWidth().height(200.dp),
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center
+	){
+		ImageIcon(
+			Modifier.fillMaxSize().alpha(0.25f),
+			drawableImage = R.drawable.tutone,
+			contentDesc = R.string.search_mag_desc
+		)
 	}
 }
 

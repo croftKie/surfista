@@ -54,45 +54,54 @@ class MainActivity : ComponentActivity() {
 
 
 	private fun createAccount(email: String, password: String, navController: NavController){
-		auth.createUserWithEmailAndPassword(email, password)
-			.addOnCompleteListener(this) { task ->
-				if (task.isSuccessful) {
-					// Sign in success, update UI with the signed-in user's information
-					Log.d(TAG, "createUserWithEmail:success")
-					Toast.makeText(
-						baseContext,
-						"Sign up complete!",
-						Toast.LENGTH_SHORT,
-					).show()
-					navController.navigate(DashboardScreen.route)
-				} else {
-					// If sign in fails, display a message to the user.
-					Log.w(TAG, "createUserWithEmail:failure", task.exception)
-					Toast.makeText(
-						baseContext,
-						"Authentication failed, try again.",
-						Toast.LENGTH_SHORT,
-					).show()
+		if(email.isEmpty() || password.isEmpty()){
+			Toast.makeText(baseContext, "Empty Input", Toast.LENGTH_SHORT).show()
+		} else {
+			auth.createUserWithEmailAndPassword(email, password)
+				.addOnCompleteListener(this) { task ->
+					if (task.isSuccessful) {
+						// Sign in success, update UI with the signed-in user's information
+						Log.d(TAG, "createUserWithEmail:success")
+						Toast.makeText(
+							baseContext,
+							"Sign up complete!",
+							Toast.LENGTH_SHORT,
+						).show()
+						navController.navigate(DashboardScreen.route)
+					} else {
+						// If sign in fails, display a message to the user.
+						Log.w(TAG, "createUserWithEmail:failure", task.exception)
+						Toast.makeText(
+							baseContext,
+							"Authentication failed, try again.",
+							Toast.LENGTH_SHORT,
+						).show()
+					}
 				}
-			}
+		}
+
 	}
 	private fun signInWithEmailAndPassword(email: String, password: String, navController: NavController){
-		auth.signInWithEmailAndPassword(email, password)
-			.addOnCompleteListener(this) { task ->
-				if (task.isSuccessful) {
-					// Sign in success, update UI with the signed-in user's information
-					Log.d(TAG, "signInWithEmail:success")
-					navController.navigate(DashboardScreen.route)
-				} else {
-					// If sign in fails, display a message to the user.
-					Log.w(TAG, "signInWithEmail:failure", task.exception)
-					Toast.makeText(
-						baseContext,
-						"Authentication failed, try again.",
-						Toast.LENGTH_SHORT,
-					).show()
+		if(email.isEmpty() || password.isEmpty()){
+			Toast.makeText(baseContext, "Empty Input", Toast.LENGTH_SHORT).show()
+		} else {
+			auth.signInWithEmailAndPassword(email, password)
+				.addOnCompleteListener(this) { task ->
+					if (task.isSuccessful) {
+						// Sign in success, update UI with the signed-in user's information
+						Log.d(TAG, "signInWithEmail:success")
+						navController.navigate(DashboardScreen.route)
+					} else {
+						// If sign in fails, display a message to the user.
+						Log.w(TAG, "signInWithEmail:failure", task.exception)
+						Toast.makeText(
+							baseContext,
+							"Authentication failed, try again.",
+							Toast.LENGTH_SHORT,
+						).show()
+					}
 				}
-			}
+		}
 	}
 
 
