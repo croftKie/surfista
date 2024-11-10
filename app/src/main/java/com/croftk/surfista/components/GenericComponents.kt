@@ -1,9 +1,12 @@
 package com.croftk.surfista.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,18 +56,27 @@ import com.croftk.surfista.R
 
 @Composable
 fun ClickableIcon(
-	modifier: Modifier = Modifier, drawableImage: Int, contentDesc: Int, click: ()-> Unit, lineActive: Boolean = false){
-	Column {
+	modifier: Modifier = Modifier,
+	drawableImage: Int,
+	contentDesc: Int,
+	click: ()-> Unit,
+	lineActive: Boolean = false
+){
+	Column(modifier = modifier.clip(CircleShape).padding(4.dp).clickable(
+		interactionSource = remember { MutableInteractionSource() },
+		indication = rememberRipple(
+			bounded = true,
+			radius = 10.dp,
+			color = colorResource(R.color.darkTurq)
+		)) {
+		click()
+	},
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Center){
 		Icon(
-			modifier = modifier.clickable {
-				click()
-			}.padding(bottom = 5.dp),
 			painter = painterResource(drawableImage),
 			contentDescription = stringResource(id = contentDesc)
 		)
-		if(lineActive){
-			HorizontalDivider(modifier = Modifier.height(3.dp).width(30.dp).background(colorResource(R.color.darkTurq)))
-		}
 	}
 }
 @Composable
@@ -126,11 +139,10 @@ fun SolidButton(
 ){
 	Card(
 		modifier = modifier
-			.widthIn(60.dp, 120.dp)
+			.widthIn(30.dp, 100.dp)
 			.height(30.dp)
 			.clickable(enabled = true, onClick = onClick),
 		shape = RoundedCornerShape(6.dp),
-		elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
 	) {
 		Row(
 			modifier = Modifier
@@ -171,38 +183,38 @@ fun NavigationBar(
 		ClickableIcon(
 			Modifier
 				.height(40.dp)
-				.width(40.dp),
+				.width(40.dp)
+				.alpha(if(activeOption.value == 0) 1f else 0.5f),
 			R.drawable.surfboard,
 			R.string.search_mag_desc,
 			click = {
 				activeOption.value = 0
 				leftOptionOnClick()
 			},
-			lineActive = activeOption.value == 0
 		)
 		ClickableIcon(
 			Modifier
 				.height(40.dp)
-				.width(40.dp),
-			R.drawable.wave,
+				.width(40.dp)
+				.alpha(if(activeOption.value == 1) 1f else 0.2f),
+			R.drawable.logo,
 			R.string.search_mag_desc,
 			click = {
 				activeOption.value = 1
 				centerOptionOnClick()
 			},
-			lineActive = activeOption.value == 1
 		)
 		ClickableIcon(
 			Modifier
 				.height(40.dp)
-				.width(40.dp),
+				.width(40.dp)
+				.alpha(if(activeOption.value == 2) 1f else 0.2f),
 			R.drawable.setting,
 			R.string.search_mag_desc,
 			click = {
 				activeOption.value = 2
 				rightOptionOnClick()
 			},
-			lineActive = activeOption.value == 2
 		)
 	}
 }
@@ -254,7 +266,8 @@ fun InputField(
 	focusedIndicatorColor: Color = colorResource(R.color.grenTurq),
 	unfocusedIndicatorColor: Color = colorResource(R.color.darkTurq),
 	keyboardType: KeyboardType = KeyboardType.Text,
-	visualTransformation: VisualTransformation = VisualTransformation.None
+	visualTransformation: VisualTransformation = VisualTransformation.None,
+	onClick: (MutableState<String>) -> Unit = {}
 ){
 	TextField(
 		modifier = Modifier
@@ -268,10 +281,23 @@ fun InputField(
 		value = value.value,
 		onValueChange = { value.value = it },
 		placeholder = {
-			Text(placeholderText)
+			Text(modifier = Modifier.alpha(0.4f), text = placeholderText)
 		},
 		keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-		visualTransformation = visualTransformation
+		visualTransformation = visualTransformation,
+		trailingIcon = {
+			ClickableIcon(
+				Modifier
+					.height(25.dp)
+					.width(25.dp)
+					.alpha(0.4f),
+				R.drawable.mag,
+				R.string.search_mag_desc,
+				click = {
+					onClick(value)
+				}
+			)
+		}
 	)
 }
 
@@ -284,42 +310,7 @@ fun SearchBar(
 	searchBarActive: Boolean = true,
 	placeholder: String = "Search Surf Spot"
 ) {
-
-	Row(
-		modifier = Modifier
-			.padding(adjustablePadding)
-			.fillMaxWidth()
-			.height(55.dp),
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.spacedBy(12.dp)
-	){
-		if(searchBarActive){
-			InputField(placeholderText = placeholder, value = value, width = if(buttonActive) 0.8f else 1.0f)
-		}
-		if(buttonActive){
-			Column(
-				modifier = Modifier
-					.fillMaxHeight()
-					.width(55.dp)
-					.clip(shape = CircleShape)
-					.background(colorResource(R.color.offWhite)),
-				horizontalAlignment = Alignment.CenterHorizontally,
-				verticalArrangement = Arrangement.Center
-			){
-				ClickableIcon(
-					Modifier
-						.fillMaxWidth()
-						.height(25.dp)
-						.width(25.dp),
-					R.drawable.mag,
-					R.string.search_mag_desc,
-					click = {
-						onClick(value)
-					}
-				)
-			}
-		}
-	}
+	InputField(placeholderText = placeholder, value = value, width = 1.0f, onClick = onClick)
 }
 
 

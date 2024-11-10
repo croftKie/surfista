@@ -14,9 +14,12 @@
     <color name="red">#FFE16059</color>
     <color name="green">#FF86E36D</color>
 <!--  New Palette  -->
-    <color name="darkTurq">#5D737E</color>
+    <color name="darkTurq">#41958B</color>
     <color name="grenTurq">#64B6AC</color>
+    <color name="lightTurq">#B6B0E6E0</color>
     <color name="midTurq">#C0FDFB</color>
-    <color name="lightTurq">#DAFFEF</color>
     <color name="offWhite">#FCFFFD</color>
+    <color name="lightGrey">#F5F5F5</color>
+    <color name="darkGray">#B6333333</color>
+    <color name="borderDark">#4E333333</color>
 </resources>

@@ -178,7 +178,7 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 				SearchBar(
 					12.dp,
 					value = searchInput,
-					buttonActive = false,
+					buttonActive = true,
 					placeholder = "Filter Surfboards",
 					onClick = {
 							updatedText ->
@@ -192,8 +192,8 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 								entry.key.lowercase().contains(searchInput.value.lowercase()) ||
 								value.lowercase().contains(searchInput.value.lowercase())
 							){
-//								SearchResult(entry.key, value, db)
-								HorizontalCard()
+								// SearchResult(entry.key, value, db)
+								HorizontalCard(entry.key, value, db)
 							}
 						}
 					}
@@ -202,63 +202,3 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 		}
 	}
 }
-
-@Composable
-fun SearchResult(boardType: String, value: String, db: AppDatabase){
-	Row(modifier = Modifier.height(100.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-		Card(
-			modifier = Modifier,
-			shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp),
-			elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-		){
-			Row(
-				modifier = QuiverFilterModifier().fillMaxWidth(0.75f),
-				horizontalArrangement = Arrangement.SpaceBetween,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Row(modifier = Modifier.padding(12.dp).fillMaxWidth(0.75f),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceEvenly
-				) {
-					Column(
-						modifier = Modifier,
-						verticalArrangement = Arrangement.spacedBy(12.dp)
-					) {
-						Text(color = colorResource(R.color.darkTurq), text = "Type:", fontSize = 20.sp)
-						Text(color = colorResource(R.color.darkTurq), text = "Length:", fontSize = 20.sp)
-					}
-					Column(
-						modifier = Modifier,
-						verticalArrangement = Arrangement.spacedBy(12.dp)
-					) {
-						Text(color = colorResource(R.color.darkTurq), text = boardType, fontSize = 20.sp)
-						Text(color = colorResource(R.color.darkTurq), text = "${value}ft", fontSize = 20.sp)
-					}
-				}
-			}
-		}
-		Card(
-			shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp),
-			elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
-		) {
-			Column(modifier = Modifier
-				.fillMaxHeight()
-				.fillMaxWidth()
-				.background(colorResource(R.color.grenTurq))
-				.padding(12.dp),
-				verticalArrangement = Arrangement.Center,
-				horizontalAlignment = Alignment.CenterHorizontally
-			) {
-				SolidButton(text = "Add", iconActive = false) {
-					db.BoardDao().insertBoard(Board(
-						id = (1..100).random(),
-						name = "My Board",
-						type = boardType,
-						size = value
-					))
-				}
-			}
-		}
-	}
-}
-

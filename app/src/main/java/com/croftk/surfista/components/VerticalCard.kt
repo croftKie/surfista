@@ -38,19 +38,14 @@ import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.Board
 
 @Composable
-fun HorizontalCard(
-	boardType: String,
-	value: String,
-	db: AppDatabase,
+fun VerticalCard(
 	rightContentBg: Color = colorResource(R.color.offWhite),
 	radius: Dp = 12.dp,
 	height: Dp = 95.dp,
 ){
-	Row(modifier = Modifier
-		.height(height)
-		.fillMaxWidth()
-		.background(colorResource(R.color.offWhite)),
-		horizontalArrangement = Arrangement.spacedBy(6.dp)
+	Box(modifier = Modifier
+		.height(230.dp)
+		.width(230.dp)
 	) {
 		Card(
 			modifier = Modifier
@@ -59,22 +54,24 @@ fun HorizontalCard(
 				.clip(RoundedCornerShape(radius)),
 			border = BorderStroke(1.dp, colorResource(R.color.borderDark))
 		){
-			Row(
+			Column(
 				modifier = Modifier
 					.fillMaxHeight()
 					.fillMaxWidth()
-					.background(colorResource(R.color.lightGrey)),
-				verticalAlignment = Alignment.Bottom,
-				horizontalArrangement = Arrangement.SpaceBetween
+					.background(colorResource(R.color.lightGrey))
 			) {
 				Column(
 					modifier = Modifier
 						.fillMaxHeight()
-						.padding(12.dp),
-					verticalArrangement = Arrangement.SpaceBetween
-				) {
-					Text(color = colorResource(R.color.darkGray), text=boardType, fontSize = 23. sp)
-					Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+						.fillMaxWidth()
+						.padding(8.dp),
+					verticalArrangement = Arrangement.SpaceEvenly,
+					horizontalAlignment = Alignment.End
+				)  {
+					Row(
+						modifier = Modifier.fillMaxWidth().fillMaxHeight(0.15f),
+						horizontalArrangement = Arrangement.spacedBy(12.dp)
+					) {
 						Box(
 							modifier = Modifier
 								.clip(RoundedCornerShape(6.dp))
@@ -82,7 +79,7 @@ fun HorizontalCard(
 								.padding(vertical = 4.dp, horizontal = 8.dp)
 
 						) {
-							Text(text="${value}ft", fontSize = 15.sp)
+							Text(text="10ft", fontSize = 15.sp)
 						}
 						Box(
 							modifier = Modifier
@@ -94,25 +91,16 @@ fun HorizontalCard(
 							Text(text="70 litres", fontSize = 15.sp)
 						}
 					}
-				}
-				Column(
-					modifier = Modifier
-						.fillMaxHeight()
-						.padding(8.dp),
-					verticalArrangement = Arrangement.Bottom
-				)  {
+					Box(
+						modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
+					) {
+
+					}
 					ClickableIcon(
 						modifier = Modifier.height(30.dp),
 						drawableImage = R.drawable.add,
 						contentDesc = R.string.search_mag_desc,
-						click = {
-							db.BoardDao().insertBoard(Board(
-								id = (1..100).random(),
-								name = "My Board",
-								type = boardType,
-								size = value
-							))
-						}
+						click = {}
 					)
 				}
 			}
@@ -123,13 +111,13 @@ fun HorizontalCard(
 
 
 
-//@Preview
-//@Composable
-//fun PrevHoriCard(){
-//	Surface(Modifier.background(colorResource(R.color.offWhite)).padding(12.dp)) {
-//		HorizontalCard()
-//	}
-//}
+@Preview
+@Composable
+fun PrevHoriCard(){
+	Surface(Modifier.background(colorResource(R.color.offWhite)).padding(12.dp)) {
+		VerticalCard()
+	}
+}
 
 
 
