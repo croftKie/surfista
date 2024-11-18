@@ -4,9 +4,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +20,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,13 +78,16 @@ import androidx.navigation.compose.rememberNavController
 //import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.croftk.surfista.BuildConfig
 import com.croftk.surfista.R
+import com.croftk.surfista.components.ClickableIcon
 import com.croftk.surfista.components.Empty
 import com.croftk.surfista.ui.theme.SurfistaTheme
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
+import com.croftk.surfista.components.OutlineIcon
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.components.Tutorial
+import com.croftk.surfista.components.VerticalDashboardCard
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
@@ -86,6 +95,7 @@ import com.croftk.surfista.db.entities.Temperature
 import com.croftk.surfista.db.entities.Wind
 import com.croftk.surfista.utilities.Helpers
 import com.croftk.surfista.utilities.SearchScreen
+import com.croftk.surfista.utilities.animations.moveElement
 import com.croftk.surfista.utilities.calculations.Quality
 import com.croftk.surfista.utilities.httpServices.GeoServices
 import ir.ehsannarmani.compose_charts.LineChart
@@ -106,6 +116,7 @@ import kotlin.math.roundToInt
 @Composable
 fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db: AppDatabase){
 	var isActive = remember { mutableStateOf(0) }
+	var tableSelected = remember { mutableStateOf(0) }
 	val selectedDay = remember { mutableIntStateOf(0) }
 	val openDialog = remember { mutableStateOf(false) }
 	val dialogData = remember { mutableStateOf<List<String>>(listOf()) }
@@ -113,6 +124,16 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 	val waveData = db.MarineDao().getMarine()
 	val tempData = db.TempDao().getTempData()
 	val windData = db.WindDao().getWindData()
+
+	val tableAnimActive = remember {mutableStateOf(false)}
+	val offset by moveElement(
+		transformX = 400.dp,
+		resetActive = true,
+		active = tableAnimActive,
+		finishedListener = {
+			tableSelected.value = isActive.value
+		}
+	)
 
 
 	Column(modifier = Modifier
@@ -126,11 +147,16 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 				.fillMaxWidth()
 				.fillMaxHeight(0.4f),
 		){
-			Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(20.dp),
+				horizontalArrangement = Arrangement.Center,
+				verticalAlignment = Alignment.CenterVertically
+			) {
 				Column(
 					modifier = Modifier
-						.padding(start = 12.dp, top = 12.dp)
-						.fillMaxWidth(0.75f)
+						.fillMaxWidth(0.85f)
 				) {
 					Text(
 						color = colorResource(R.color.offWhite),
@@ -151,15 +177,25 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 						)
 					}
 				}
-				SearchBar(
-					searchBarActive = false,
-					adjustablePadding = 10.dp,
+				OutlineIcon(
+					icon = R.drawable.mag,
+					height = 30.dp,
+					width = 30.dp,
 					onClick = {
 						navController.navigate(SearchScreen.route)
-					})
+					}
+				)
 			}
 			if(waveData.isNotEmpty()){
-				DayCardRow(adjustablePadding = 20.dp, waveData, tempData, windData, selectedDay, navController)
+				DayCardRow(
+					adjustablePadding = 20.dp,
+					waveData,
+					tempData,
+					windData,
+					selectedDay,
+					navController,
+					tableAnimActive
+				)
 			} else {
 				Tutorial()
 			}
@@ -172,45 +208,45 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 		) {
 			Row(
 				modifier = Modifier
-					.padding(top = 20.dp)
+					.padding(horizontal = 20.dp, vertical = 10.dp)
 					.fillMaxWidth(),
-				horizontalArrangement = Arrangement.SpaceEvenly
+				horizontalArrangement = Arrangement.SpaceBetween
 			) {
 				TabButton(
 					text = "Waves",
-					width = 100.dp,
 					drawable = R.drawable.wave,
 					active = isActive.value == 0,
 					fontSize = 15.sp,
 					onClick = {
 						isActive.value = 0
+						tableAnimActive.value = !tableAnimActive.value
 					}
 				)
 				TabButton(
 					text = "Weather",
-					width = 100.dp,
 					drawable = R.drawable.sun,
 					active = isActive.value == 1,
 					fontSize = 15.sp,
 					onClick = {
 						isActive.value = 1
+						tableAnimActive.value = !tableAnimActive.value
 					}
 				)
 				TabButton(
 					text = "Wind",
-					width = 100.dp,
 					drawable = R.drawable.wind,
 					active = isActive.value == 2,
 					fontSize = 15.sp,
 					onClick = {
 						isActive.value = 2
+						tableAnimActive.value = !tableAnimActive.value
 					}
 				)
 			}
 			if(waveData.isNotEmpty()){
-				when(isActive.value){
+				when(tableSelected.value){
 					0 -> Table(
-						Modifier,
+						Modifier.offset { offset },
 						timeData = waveData[selectedDay.intValue].time.split(","),
 						rowOneValues = waveData[selectedDay.intValue].wave_height.split(","),
 						rowTwoValues = waveData[selectedDay.intValue].wave_period.split(","),
@@ -219,7 +255,7 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 						dialogData = dialogData
 						)
 					1 -> Table(
-						Modifier,
+						Modifier.offset { offset },
 						timeData = tempData[selectedDay.intValue].time.split(","),
 						rowOneValues = tempData[selectedDay.intValue].temperature.split(","),
 						rowTwoValues = tempData[selectedDay.intValue].rain.split(","),
@@ -229,7 +265,7 @@ fun Dashboard(innerPadding: PaddingValues, navController: NavHostController, db:
 						dialogData = dialogData
 						)
 					2 -> Table(
-						Modifier,
+						Modifier.offset { offset },
 						timeData = windData[selectedDay.intValue].time.split(","),
 						rowOneValues = windData[selectedDay.intValue].wind_speed.split(","),
 						rowTwoValues = windData[selectedDay.intValue].wind_direction.split(","),
@@ -279,7 +315,7 @@ fun LineGraphComp(dialogData: List<String>){
 		modifier = Modifier.fillMaxSize().padding(22.dp),
 		data = listOf(
 			Line(
-				label = "Windows",
+				label = "",
 				values = data,
 				color = SolidColor(Color(0xFF23af92)),
 				firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
@@ -296,103 +332,6 @@ fun LineGraphComp(dialogData: List<String>){
 	)
 }
 
-
-@Composable
-fun DayCard(item: Marine, tempItem: Temperature, windItem: Wind, position: Int, selectedDay: MutableIntState){
-	var avgTemp = Helpers.getAverage(tempItem.temperature)
- 	var avgWind = Helpers.getAverage(windItem.wind_speed)
-	var avgwave = Helpers.getAverage(item.wave_height)
-	var avgWaveDirec = Helpers.getAverage(item.wave_direction)
-	var avgWindDirec = Helpers.getAverage(windItem.wind_direction)
-
-
-
-	val quality = remember { mutableIntStateOf(Quality.getScore(
-		waveHeight = avgwave,
-		preferredWaveSize = 1.5f,
-		windDirect = avgWindDirec,
-		waveDirect = avgWaveDirec,
-		size = 9.0f
-	)) }
-
-	val isActive = position == selectedDay.intValue
-	Card(modifier = Modifier
-		.height(if(isActive) 200.dp else 170.dp)
-		.width(if(isActive) 200.dp else 170.dp)
-		.padding(end = 6.dp)
-		.clickable {
-			selectedDay.intValue = position
-		}
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxHeight()
-				.background(colorResource(R.color.offWhite))
-				.padding(12.dp),
-			verticalArrangement = Arrangement.SpaceBetween
-		) {
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.SpaceBetween,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text(item.id, fontSize = 20.sp);
-				Box(modifier = Modifier
-					.clip(shape = CircleShape)
-					.height(15.dp)
-					.width(15.dp)
-					.background(
-						when(quality.intValue){
-							1 -> colorResource(R.color.red)
-							2 -> colorResource(R.color.orange)
-							3 -> colorResource(R.color.green)
-							else -> {
-								colorResource(R.color.offWhite)
-							}
-						})
-				)
-			}
-			Row (modifier = Modifier.fillMaxWidth()){
-				Row(modifier = Modifier
-					.fillMaxWidth(0.45f),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(6.dp)
-				){
-					ImageIcon(
-						Modifier.height(15.dp).width(15.dp),
-						R.drawable.sun,
-						R.string.search_mag_desc
-					)
-					Text( text = "${avgTemp.roundToInt()}°C")
-				}
-				Row(modifier = Modifier
-					.fillMaxWidth(),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceEvenly
-				){
-					ImageIcon(
-						Modifier.height(15.dp).width(15.dp),
-						R.drawable.wind,
-						R.string.search_mag_desc
-					)
-					Text( text = "${avgWind.roundToInt()}km/h")
-				}
-			}
-			Row(modifier = Modifier
-				.fillMaxWidth(),
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text( text = "Daily High: ${item.wave_height.split(",").maxOrNull()}m")
-			}
-			Row(modifier = Modifier
-				.fillMaxWidth(),
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text( text = "Daily Low: ${item.wave_height.split(",").minOrNull()}m")
-			}
-		}
-	}
-}
 @Composable
 fun DayCardRow(
 	adjustablePadding: Dp,
@@ -401,9 +340,8 @@ fun DayCardRow(
 	windData: List<Wind>,
 	selectedDay: MutableIntState,
 	navController: NavHostController,
+	tableAnimActive: MutableState<Boolean>
 ){
-	val scrollState = rememberScrollState()
-
 
 	Column(
 		modifier = Modifier
@@ -411,14 +349,28 @@ fun DayCardRow(
 			.clip(shape = RoundedCornerShape(12.dp)),
 		verticalArrangement = Arrangement.spacedBy(18.dp)
 	) {
-		Row(modifier = Modifier
-			.padding(bottom = adjustablePadding, start = adjustablePadding / 2)
-			.horizontalScroll(scrollState),
+		val state = rememberLazyListState()
+		LazyRow(modifier = Modifier
+			.height(250.dp)
+			.padding(bottom = adjustablePadding, start = adjustablePadding / 2),
+			state = state,
+			flingBehavior = rememberSnapFlingBehavior(lazyListState = state),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.spacedBy(12.dp))
 		{
-			data.forEachIndexed{index, item ->
-				DayCard(item, tempData[index], windData[index], index, selectedDay)
+			items(data.size) { it ->
+				VerticalDashboardCard(
+					Modifier
+						.clickable {
+						tableAnimActive.value = !tableAnimActive.value
+						selectedDay.intValue = it
+					},
+					data[it],
+					tempData[it],
+					windData[it],
+					it,
+					selectedDay
+				)
 			}
 		}
 	}
@@ -453,7 +405,8 @@ fun Table(
 						modifier = Modifier
 							.padding(6.dp)
 							.clip(shape = RoundedCornerShape(12.dp))
-							.background(colorResource(R.color.grenTurq))
+							.background(colorResource(R.color.lightGrey))
+							.border(BorderStroke(1.dp, colorResource(R.color.borderDark)))
 							.height(rowHeight)
 							.width(columnHeight)
 							.clickable {
@@ -478,16 +431,16 @@ fun Table(
 
 							}
 						} else if (j == 1){
-							Text(color = colorResource(R.color.offWhite), text = timeData[index].substring(12))
+							Text(color = colorResource(R.color.darkGray), text = timeData[index].substring(12))
 						} else {
 							val v1 = if (rowOneValues[index] !== "null") { "${rowOneValues[index]}${valueTypes[0]}" } else { "N/A" }
 							val v2 = if (rowTwoValues[index] !== "null") { "${rowTwoValues[index]}${valueTypes[1]}" } else { "N/A" }
 							val v3 = if (rowThreeValues[index] !== "null") { "${rowThreeValues[index].toFloat() / 1000}${valueTypes[2]}" } else { "N/A" }
 
 							when(j){
-								2 -> Text(color = colorResource(R.color.offWhite), text = v1)
-								3 -> Text(color = colorResource(R.color.offWhite), text = v2)
-								4 -> Text(color = colorResource(R.color.offWhite), text = v3)
+								2 -> Text(color = colorResource(R.color.darkGray), text = v1)
+								3 -> Text(color = colorResource(R.color.darkGray), text = v2)
+								4 -> Text(color = colorResource(R.color.darkGray), text = v3)
 							}
 						}
 					}

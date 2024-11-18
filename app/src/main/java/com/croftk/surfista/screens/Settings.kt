@@ -1,7 +1,9 @@
 package com.croftk.surfista.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +19,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,11 +36,13 @@ import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
+import com.croftk.surfista.components.Popup
 import com.croftk.surfista.components.TabButton
 import com.croftk.surfista.components.TitleBar
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.User
 import com.croftk.surfista.utilities.LoginScreen
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
@@ -47,15 +54,20 @@ fun ListItem(
 	color: Color,
 	backgroundColor: Color,
 	image: Int = R.drawable.downarrow,
+	click: () -> Unit = {}
 ){
-	Column(modifier = Modifier.background(backgroundColor)){
+	Column(
+		modifier = Modifier.background(backgroundColor).clickable {
+			click()
+		}
+	){
 		Row(
-			modifier = modifier.padding(12.dp).fillMaxWidth(0.9f),
+			modifier = modifier.padding(12.dp).fillMaxWidth(0.75f),
 			horizontalArrangement = Arrangement.SpaceBetween,
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			Text(itemText, fontSize = 25.sp)
-			ImageIcon(Modifier.height(20.dp), image, R.string.search_mag_desc)
+			Text(itemText, fontSize = 18.sp)
+			ImageIcon(Modifier.height(18.dp), image, R.string.search_mag_desc)
 		}
 	}
 }
@@ -63,35 +75,60 @@ fun ListItem(
 @Composable
 fun Profile(db: AppDatabase, navController: NavController, user: FirebaseUser?, auth: FirebaseAuth){
 	Column(
-		modifier = Modifier.fillMaxHeight(0.3f).padding(top = 16.dp),
+		modifier = Modifier.fillMaxHeight(0.30f).padding(top = 16.dp),
 		verticalArrangement = Arrangement.spacedBy(12.dp),
 		horizontalAlignment = Alignment.CenterHorizontally,
 	) {
 		Image(
 			modifier = Modifier
-				.height(100.dp)
-				.clip(shape = CircleShape)
-				.background(colorResource(R.color.blue))
-				.padding(12.dp),
-			painter = painterResource(R.drawable.wave),
+				.height(150.dp)
+				.clip(shape = CircleShape),
+			painter = painterResource(R.drawable.logo),
 			contentDescription = ""
 		)
-		user?.email?.let { Text(it) }
-		Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-			TabButton(text = "Profile", iconActive = false) {
-				auth.signOut()
-				navController.navigate(LoginScreen.route)
-			}
-			TabButton(text = "Logout", iconActive = false) {
-				auth.signOut()
-				navController.navigate(LoginScreen.route)
-			}
-		}
+		user?.email?.let { Text(it, fontSize = 25.sp) }
 	}
 }
 
 @Composable
-fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppDatabase, user: FirebaseUser?, auth: FirebaseAuth){
+fun Settings(
+	innerPadding: PaddingValues,
+	navController: NavController,
+	db: AppDatabase,
+	user: FirebaseUser?,
+	auth: FirebaseAuth
+){
+	val openAlertDialog = remember { mutableStateOf(false) }
+	val dialogTitle = remember { mutableStateOf("") }
+	val dialogText = remember { mutableStateOf("") }
+	val icon = remember { mutableIntStateOf(R.drawable.sun) }
+	val onConfirmation = remember { mutableStateOf<(String)->Unit>({}) }
+	val onDismiss = remember { mutableStateOf({}) }
+	val mode = remember { mutableIntStateOf(0) }
+	val placeholder = remember { mutableStateOf("") }
+
+	fun onConf():(String)->Unit{
+		return onConfirmation.value
+	}
+
+	when {
+		openAlertDialog.value -> {
+			Popup(
+				onConfirmation = onConf(),
+				onDismissRequest = {
+					openAlertDialog.value = false
+					onDismiss.value()
+				},
+				dialogText = dialogText.value,
+				dialogTitle = dialogTitle.value,
+				icon = icon.intValue,
+				mode = mode.intValue,
+				placeholderText = placeholder.value
+			)
+		}
+	}
+
+
 	Column(
 		modifier = Modifier
 			.background(colorResource(R.color.grenTurq))
@@ -124,7 +161,7 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.mail
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
+				HorizontalDivider(Modifier.fillMaxWidth(0.75f))
 				ListItem(
 					Modifier,
 					"Change Password",
@@ -132,14 +169,14 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.padlock
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
-				ListItem(
-					Modifier,
-					"Toggle Notifications",
-					Color.DarkGray,
-					Color.Transparent,
-					R.drawable.notification
-				)
+//				HorizontalDivider(Modifier.fillMaxWidth(0.75f))
+//				ListItem(
+//					Modifier,
+//					"Toggle Notifications",
+//					Color.DarkGray,
+//					Color.Transparent,
+//					R.drawable.notification
+//				)
 			}
 			Column(
 				modifier = Modifier
@@ -154,19 +191,54 @@ fun Settings(innerPadding: PaddingValues, navController: NavController, db: AppD
 					Color.Transparent,
 					R.drawable.googledocs
 				)
-				HorizontalDivider(Modifier.fillMaxWidth(0.9f))
+				HorizontalDivider(Modifier.fillMaxWidth(0.75f))
+				ListItem(
+					Modifier,
+					"Log Out",
+					Color.DarkGray,
+					Color.Transparent,
+					R.drawable.logout,
+					click = {
+						auth.signOut()
+						navController.navigate(LoginScreen.route)
+					}
+				)
+				HorizontalDivider(Modifier.fillMaxWidth(0.75f))
 				ListItem(
 					Modifier,
 					"Delete Account",
 					Color.DarkGray,
 					Color.Transparent,
-					R.drawable.trash
+					R.drawable.trash,
+					click = {
+						dialogTitle.value = "Delete Account"
+						dialogText.value = "Are you sure that you want to delete your account?"
+						icon.intValue = R.drawable.trash
+						placeholder.value = "Enter Password"
+						openAlertDialog.value = true
+
+						onConfirmation.value = { strValue ->
+							if(mode.intValue == 0){
+								mode.intValue = 1
+								dialogText.value = "Confirm password to delete your account immediately."
+							} else if (mode.intValue == 1){
+								val creds = EmailAuthProvider.getCredential(auth.currentUser?.email!!, strValue)
+
+								auth.currentUser?.reauthenticate(creds)?.addOnCompleteListener {
+									auth.currentUser?.delete()?.addOnSuccessListener {
+										dialogText.value = "Account Deleted!"
+									}?.addOnFailureListener { error ->
+										println(error)
+									}
+								}
+							}
+						}
+					}
 				)
 			}
 		}
 	}
 }
-
 
 //@Composable
 //@Preview

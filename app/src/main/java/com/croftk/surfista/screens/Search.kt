@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -57,11 +60,14 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.BuildConfig
 import com.croftk.surfista.R
+import com.croftk.surfista.components.HorizontalCard
 import com.croftk.surfista.components.ImageIcon
 import com.croftk.surfista.components.NavigationBar
 import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.SearchResultModifier
+import com.croftk.surfista.components.VerticalDashboardCard
 import com.croftk.surfista.db.AppDatabase
+import com.croftk.surfista.db.entities.Favourite
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.utilities.DashboardScreen
@@ -81,34 +87,80 @@ import org.osmdroid.views.MapView
 @Composable
 fun Search(innerPadding: PaddingValues, navController: NavController, db: AppDatabase) {
 	val scope = rememberCoroutineScope()
-	val geoData = db.GeolocationDao().getAllSorted()
+	val geoData by remember { mutableStateOf(db.GeolocationDao().getAllSorted()) }
+	val favData = remember { mutableStateOf(db.FavouriteDao().getAll()) }
 	val selectedLocation = remember { mutableIntStateOf(-1) }
 	val openDialog = remember { mutableStateOf(true) }
+	val searchInput = remember { mutableStateOf("") }
 	Column(
 		modifier = Modifier
 			.fillMaxHeight()
+			.fillMaxWidth()
 			.background(colorResource(R.color.grenTurq))
-			.padding(innerPadding)
-	) {
-		SearchBar(onClick = { value ->
-			scope.launch {
-				val result = GeoServices.fetchGeoData(
-					location = value.value
-				)
-				db.GeolocationDao().deleteAll()
-				result?.forEach { item ->
-					db.GeolocationDao().insertLocation(GeoLocation(
-						placeId = item.place_id,
-						name = Helpers.cleanGeoAddress(item.display_name),
-						lat = item.lat,
-						lon = item.lon,
-						importance = item.importance.toFloat()
-					))
+			.padding(innerPadding),
+		horizontalAlignment = Alignment.CenterHorizontally
+	){
+		Column(modifier = Modifier.height(200.dp)) {
+			val state = rememberLazyListState()
+
+			LazyRow(modifier = Modifier
+				.height(250.dp)
+				.padding(bottom = 6.dp, start = 6.dp / 2),
+				state = state,
+				flingBehavior = rememberSnapFlingBehavior(lazyListState = state),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(12.dp))
+			{
+				items(favData.value.size) { it ->
+					HorizontalCard(
+						favData.value[it],
+						it,
+						selectedLocation,
+						openDialog,
+						db,
+						navController,
+						favData
+					)
 				}
-				navController.navigate(SearchScreen.route)
 			}
-		})
-		SearchResults(geoData, selectedLocation, openDialog, db, navController)
+		}
+
+		Column(
+			modifier = Modifier
+				// .verticalScroll(vertScrollState)
+				.fillMaxWidth()
+				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+				.background(colorResource(R.color.offWhite))
+				.padding(12.dp),
+			verticalArrangement = Arrangement.spacedBy(12.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			SearchBar(
+				12.dp,
+				value = searchInput,
+				buttonActive = true,
+				placeholder = "Search for a surf spot",
+				onClick = { value ->
+					scope.launch {
+						val result = GeoServices.fetchGeoData(
+							location = value.value
+						)
+						db.GeolocationDao().deleteAll()
+						result?.forEach { item ->
+							db.GeolocationDao().insertLocation(GeoLocation(
+								placeId = item.place_id,
+								name = Helpers.cleanGeoAddress(item.display_name),
+								lat = item.lat,
+								lon = item.lon,
+								importance = item.importance.toFloat()
+							))
+						}
+						navController.navigate(SearchScreen.route)
+					}
+				}
+			)
+			SearchResults(geoData, selectedLocation, openDialog, db, navController, favData)
+		}
 	}
 }
 
@@ -118,7 +170,8 @@ fun SearchResults(
 	selectedLocation: MutableIntState,
 	openDialog: MutableState<Boolean>,
 	db: AppDatabase,
-	navController: NavController
+	navController: NavController,
+	favData: MutableState<List<Favourite>>
 ){
 	val scrollState = rememberScrollState()
 	Column(
@@ -133,63 +186,7 @@ fun SearchResults(
 		verticalArrangement = Arrangement.spacedBy(24.dp)
 	) {
 		geoData.forEachIndexed {index, item ->
-			SearchResult(item, index, selectedLocation, openDialog, db, navController)
-		}
-	}
-}
-
-@Composable
-fun SearchResult(
-	item: GeoLocation,
-	index: Int,
-	selectedLocation: MutableIntState,
-	openDialog: MutableState<Boolean>,
-	db: AppDatabase,
-	navController: NavController
-){
-	val scope = rememberCoroutineScope()
-	Row(
-		modifier = SearchResultModifier()
-			.clickable {
-				scope.launch {
-					val waveResult = WaveServices.fetchWaveData(item.lat, item.lon)
-					val tempResult = WaveServices.fetchTempData(item.lat, item.lon)
-					val windResult = WaveServices.fetchWindData(item.lat, item.lon)
-
-					if (waveResult?.hourly?.wave_height?.get(0) == null){
-						println("No Wave Data Available")
-					} else {
-						db.MarineDao().deleteAll()
-						db.TempDao().deleteAll()
-						db.WindDao().deleteAll()
-
-						if(waveResult != null){
-							Helpers.storeFetchedData(waveResult, item, db.MarineDao())
-						}
-						if(tempResult != null){
-							Helpers.storeFetchedData(tempResult, item, db.TempDao())
-						}
-						if(windResult != null){
-							Helpers.storeFetchedData(windResult, item, db.WindDao())
-						}
-						navController.navigate(DashboardScreen.route)
-					}
-				}
-			}
-	) {
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.fillMaxHeight(),
-			horizontalArrangement = Arrangement.spacedBy(12.dp)
-		) {
-			Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Center){
-				MapModal(item.lat.toDouble(), item.lon.toDouble())
-			}
-			Column(modifier = Modifier.fillMaxWidth()) {
-				Text(text = item.name, modifier = Modifier.fillMaxWidth())
-				Text(text = item.importance.toString())
-			}
+			HorizontalCard(item, index, selectedLocation, openDialog, db, navController, favData)
 		}
 	}
 }
@@ -197,9 +194,8 @@ fun SearchResult(
 @Composable
 fun MapModal(lat: Double, lon: Double){
 	Column(Modifier
-		.width(75.dp)
-		.height(75.dp)
-		.clip(RoundedCornerShape(6.dp))
+		.width(125.dp)
+		.fillMaxHeight()
 		.clipToBounds()
 	) {
 		OsmdroidMapView(lat, lon)

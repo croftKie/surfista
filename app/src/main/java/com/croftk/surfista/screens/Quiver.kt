@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.croftk.surfista.R
+import com.croftk.surfista.components.CapsuleCard
 import com.croftk.surfista.components.ClickableIcon
 import com.croftk.surfista.components.Empty
 import com.croftk.surfista.components.HorizontalCard
@@ -53,11 +54,12 @@ import com.croftk.surfista.components.SearchBar
 import com.croftk.surfista.components.SearchResultModifier
 import com.croftk.surfista.components.SolidButton
 import com.croftk.surfista.components.TitleBar
+import com.croftk.surfista.components.VerticalCard
 import com.croftk.surfista.db.AppDatabase
 import com.croftk.surfista.db.entities.Board
 
 @Composable
-fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
+fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>, db: AppDatabase){
 	val scrollState = rememberScrollState()
 
 	Column(
@@ -71,8 +73,19 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 			horizontalArrangement = if(quiver.value.isNotEmpty()) Arrangement.spacedBy(12.dp) else Arrangement.Center
 		) {
 			if (quiver.value.isNotEmpty()){
-				quiver.value.forEachIndexed{i, board->
-					BoardCard(board)
+				quiver.value.forEachIndexed{_, board->
+					VerticalCard(
+						board = board,
+						clickToSave = { name ->
+							val newBoard = Board(
+								id = board.id,
+								name = name,
+								type = board.type,
+								size = board.size
+							)
+							db.BoardDao().updateBoard(newBoard)
+						}
+					)
 				}
 			} else {
 				Empty(text = "No surfboards added")
@@ -80,61 +93,6 @@ fun BoardCardRow(adjustablePadding: Dp, quiver: MutableState<List<Board>>){
 		}
 	}
 }
-
-@Composable
-fun BoardCard(board: Board){
-	Column(Modifier.width(230.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-		Card(
-			modifier = Modifier,
-			shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-			elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-		) {
-			Row(modifier = Modifier
-				.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp),
-				horizontalArrangement = Arrangement.Start,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text(modifier = Modifier
-					.clip(RoundedCornerShape(6.dp))
-					.padding(3.dp),
-					text = board.name,
-					fontSize = 20.sp
-				)
-			}
-		}
-		Card(
-			shape = RoundedCornerShape(bottomEnd = 12.dp, bottomStart = 12.dp),
-			elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-		) {
-			Row(modifier = Modifier.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp)) {
-				Column(
-					modifier = Modifier.fillMaxWidth(0.4f),
-					verticalArrangement = Arrangement.spacedBy(12.dp)
-				) {
-					Text(color = colorResource(R.color.darkTurq), text = "Type:", fontSize = 20.sp)
-					Text(color = colorResource(R.color.darkTurq), text = "Length:", fontSize = 20.sp)
-				}
-				Column(
-					modifier = Modifier.fillMaxWidth(),
-					verticalArrangement = Arrangement.spacedBy(12.dp)
-				) {
-					Text(color = colorResource(R.color.darkTurq), text = board.type, fontSize = 20.sp)
-					Text(color = colorResource(R.color.darkTurq), text = "${board.size}ft", fontSize = 20.sp)
-				}
-			}
-			Row(modifier = Modifier
-				.fillMaxWidth().background(colorResource(R.color.offWhite)).padding(12.dp),
-				horizontalArrangement = Arrangement.End,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				SolidButton(text = "Edit", iconActive = false, onClick = {})
-			}
-		}
-
-
-	}
-}
-
 
 @Composable
 fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDatabase){
@@ -158,42 +116,52 @@ fun Quiver(innerPadding: PaddingValues, navController: NavController, db: AppDat
 	val myQuiver = remember { mutableStateOf(db.BoardDao().getAll()) }
 
 
-	Card(elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)) {
-		Column(
-			modifier = Modifier.fillMaxHeight().fillMaxWidth().background(colorResource(R.color.grenTurq)).padding(innerPadding),
-			horizontalAlignment = Alignment.CenterHorizontally
-		){
-			BoardCardRow(12.dp, myQuiver)
+	Column(
+		modifier = Modifier.fillMaxHeight().fillMaxWidth().background(colorResource(R.color.grenTurq)).padding(innerPadding),
+		horizontalAlignment = Alignment.CenterHorizontally
+	){
+		BoardCardRow(12.dp, myQuiver, db)
 
-			Column(
-				modifier = Modifier
-					.verticalScroll(vertScrollState)
-					.fillMaxWidth()
-					.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-					.background(colorResource(R.color.offWhite))
-					.padding(12.dp),
-				verticalArrangement = Arrangement.spacedBy(12.dp),
-				horizontalAlignment = Alignment.CenterHorizontally
-			) {
-				SearchBar(
-					12.dp,
-					value = searchInput,
-					buttonActive = true,
-					placeholder = "Filter Surfboards",
-					onClick = {
-							updatedText ->
-						searchInput.value = updatedText.value
-					}
-				)
-				boards.forEachIndexed{index, boardType ->
-					boardType.entries.forEach{ entry ->
-						entry.value.forEach { value ->
-							if (
-								entry.key.lowercase().contains(searchInput.value.lowercase()) ||
-								value.lowercase().contains(searchInput.value.lowercase())
-							){
-								// SearchResult(entry.key, value, db)
-								HorizontalCard(entry.key, value, db)
+		Column(
+			modifier = Modifier
+				.verticalScroll(vertScrollState)
+				.fillMaxWidth()
+				.clip(shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+				.background(colorResource(R.color.offWhite))
+				.padding(12.dp),
+			verticalArrangement = Arrangement.spacedBy(32.dp),
+			horizontalAlignment = Alignment.CenterHorizontally
+		) {
+			SearchBar(
+				12.dp,
+				value = searchInput,
+				buttonActive = true,
+				placeholder = "Filter Surfboards",
+				onClick = {
+						updatedText ->
+					searchInput.value = updatedText.value
+				}
+			)
+			boards.forEachIndexed{index, boardType ->
+				boardType.entries.forEach{ entry ->
+					val horiScrollState = rememberScrollState()
+
+					Column(verticalArrangement = Arrangement.spacedBy(8.dp)){
+						Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+							Text(text = entry.key, fontSize = 30.sp)
+							Text(text = "Lorem ipsum text would be placed here as a description of the board.")
+						}
+						Row(
+							modifier = Modifier.horizontalScroll(horiScrollState),
+							horizontalArrangement = Arrangement.spacedBy(24.dp)
+						) {
+							entry.value.forEach { value ->
+								if (
+									entry.key.lowercase().contains(searchInput.value.lowercase()) ||
+									value.lowercase().contains(searchInput.value.lowercase())
+								){
+									CapsuleCard(value = value, db = db, height = 60.dp)
+								}
 							}
 						}
 					}

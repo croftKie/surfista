@@ -3,6 +3,7 @@ package com.croftk.surfista.utilities
 import com.croftk.surfista.db.dao.MarineDao
 import com.croftk.surfista.db.dao.TempDao
 import com.croftk.surfista.db.dao.WindDao
+import com.croftk.surfista.db.entities.Favourite
 import com.croftk.surfista.db.entities.GeoLocation
 import com.croftk.surfista.db.entities.Marine
 import com.croftk.surfista.db.entities.Temperature
@@ -118,5 +119,105 @@ object Helpers {
 				)
 			)
 		}
+	}
+	fun storeFavouriteFetchedData(
+		data: Wavedata,
+		item: Favourite,
+		MarineDao: MarineDao,
+	){
+		val timeChunked = data.hourly.time.chunked(24)
+		val whChunked = data.hourly.wave_height.chunked(24)
+		val wpChunked = data.hourly.wave_period.chunked(24)
+		val wdChunked = data.hourly.wave_direction.chunked(24)
+
+		for (i in 1..timeChunked.size){
+			MarineDao.insertMarineData(
+				Marine(
+					id = timeChunked[i - 1][0].substring(0, 10),
+					name = item.name,
+					lat = item.lat.toDouble(),
+					lon = item.lon.toDouble(),
+					time = timeChunked[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					wave_height = whChunked[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					wave_period = wpChunked[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					wave_direction = wdChunked[i - 1].toString()
+						.replace("[", "")
+						.replace("]", "")
+				)
+			)
+		}
+	}
+	fun storeFavouriteFetchedData(
+		data: Tempdata,
+		item: Favourite,
+		TempDao: TempDao,
+	){
+		for (i in 1..data.hourly.time.chunked(24).size){
+			TempDao.insertTempData(
+				Temperature(
+					id = data.hourly.time.chunked(24)[i - 1][0].substring(0, 10),
+					name = item.name,
+					lat = item.lat.toDouble(),
+					lon = item.lon.toDouble(),
+					time = data.hourly.time.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					temperature = data.hourly.apparent_temperature.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					rain = data.hourly.rain.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					cloud_cover = data.hourly.cloud_cover.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", "")
+				)
+			)
+		}
+	}
+	fun storeFavouriteFetchedData(
+		data: Winddata,
+		item: Favourite,
+		WindDao: WindDao,
+	){
+		for (i in 1..data.hourly.time.chunked(24).size){
+			WindDao.insertWindData(
+				Wind(
+					id = data.hourly.time.chunked(24)[i - 1][0].substring(0, 10),
+					name = item.name,
+					lat = item.lat.toDouble(),
+					lon = item.lon.toDouble(),
+					time = data.hourly.time.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					visibility = data.hourly.visibility.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					wind_speed = data.hourly.wind_speed_10m.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", ""),
+					wind_direction = data.hourly.wind_direction_10m.chunked(24)[i - 1].toString()
+						.replace("[", "")
+						.replace("]", "")
+				)
+			)
+		}
+	}
+}
+
+object TextHelpers {
+	fun createAddress(text: String): List<String>{
+		val strippedBrackets = text
+			.replace("[", "")
+			.replace("]", "")
+			.replace(" ", "")
+		return strippedBrackets.split(",")
+
 	}
 }

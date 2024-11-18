@@ -87,47 +87,8 @@ fun ImageIcon(modifier: Modifier = Modifier, drawableImage: Int, contentDesc: In
 		contentDescription = stringResource(id = contentDesc)
 	)
 }
-@Composable
-fun TabButton(
-	modifier: Modifier = Modifier,
-	text: String,
-	width: Dp = 60.dp,
-	fontSize: TextUnit = 20.sp,
-	drawable: Int = R.drawable.ic_launcher_foreground,
-	active: Boolean = false,
-	iconActive: Boolean = true,
-	onClick: () -> Unit
-){
 
-	val bgColor = if (active) R.color.darkTurq else R.color.offWhite
 
-	Column(
-		modifier = modifier
-			.widthIn(60.dp, 120.dp)
-			.clickable(enabled = true, onClick = onClick),
-		horizontalAlignment = Alignment.CenterHorizontally
-	) {
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(6.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.SpaceEvenly
-		) {
-			if(iconActive){
-				ImageIcon(
-					modifier = Modifier
-						.height(20.dp)
-						.width(20.dp),
-					drawableImage = drawable,
-					contentDesc = R.string.search_mag_desc
-				)
-			}
-			Text(text = text, fontSize = fontSize)
-		}
-		HorizontalDivider(modifier.height(3.dp).width(width + 10.dp).background(colorResource(bgColor)))
-	}
-}
 @Composable
 fun SolidButton(
 	modifier: Modifier = Modifier,
@@ -173,7 +134,7 @@ fun NavigationBar(
 	centerOptionOnClick: ()->Unit = {},
 	rightOptionOnClick: ()->Unit = {}
 ){
-	val activeOption = remember { mutableIntStateOf(0) }
+	val activeOption = remember { mutableIntStateOf(1) }
 
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -206,8 +167,8 @@ fun NavigationBar(
 		)
 		ClickableIcon(
 			Modifier
-				.height(40.dp)
-				.width(40.dp)
+				.height(35.dp)
+				.width(35.dp)
 				.alpha(if(activeOption.value == 2) 1f else 0.2f),
 			R.drawable.setting,
 			R.string.search_mag_desc,
@@ -261,6 +222,7 @@ fun InputField(
 	width: Float = 0.8f,
 	radius: Dp = 0.dp,
 	placeholderText: String = "Search Surf Spot",
+	icon: Int = R.drawable.mag,
 	value: MutableState<String> = mutableStateOf(""),
 	containerColor: Color = colorResource(R.color.offWhite),
 	focusedIndicatorColor: Color = colorResource(R.color.grenTurq),
@@ -291,13 +253,13 @@ fun InputField(
 					.height(25.dp)
 					.width(25.dp)
 					.alpha(0.4f),
-				R.drawable.mag,
+				icon,
 				R.string.search_mag_desc,
 				click = {
 					onClick(value)
 				}
 			)
-		}
+		},
 	)
 }
 
@@ -352,14 +314,6 @@ fun Tutorial(modifier: Modifier = Modifier, mode: Int = 0){
 @Composable
 fun PreviewEmpty(){
 	Empty()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewTabButton(){
-	TabButton(text = "Click") {
-		println("Hello World")
-	}
 }
 
 @Preview(showBackground = true)
